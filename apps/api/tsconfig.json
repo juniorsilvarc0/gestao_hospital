@@ -1,0 +1,32 @@
+{
+  // Override deliberado em relação a `tsconfig.base.json`:
+  // a base usa NodeNext + ESM, mas o NestJS 10 ainda exige CommonJS
+  // (decorators, schematics, ts-node em runtime). Quando NestJS suportar
+  // ESM nativo (ETA 2027), unificamos com a base.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "types": ["node"],
+    "removeComments": false,
+    "preserveWatchOutput": true
+  },
+  "include": ["src/**/*", "prisma/seed.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test/**",
+    "prisma/migrations/**",
+    "**/*.spec.ts"
+  ]
+}

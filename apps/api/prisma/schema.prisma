@@ -1,0 +1,167 @@
+// HMS-BR — Prisma schema (Fase 1 / Identidade & Acesso).
+//
+// Escopo desta versão: APENAS as tabelas de DB.md §7.1.
+// Tabelas adicionais (pacientes, prestadores, etc.) entram em Fase 3+.
+//
+// Convenções:
+//   - Tabelas/colunas em snake_case PT (espelham TISS/SUS/ANS).
+//   - Campos do modelo TS em camelCase EN.
+//   - IDs BIGINT (BigSerial no banco). UUID externo opcional para
+//     integrações com parceiros externos.
+//   - Timestamps `TIMESTAMPTZ` em UTC.
+//   - Catálogos (perfis, permissoes, joins) NÃO usam soft-delete —
+//     usam `ativo` quando aplicável.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  extensions        = [
+    uuidOssp(map: "uuid-ossp"),
+    pgcrypto,
+    pgTrgm(map: "pg_trgm"),
+    btreeGin(map: "btree_gin"),
+    btreeGist(map: "btree_gist"),
+    unaccent,
+  ]
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Tenants
+// ─────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id                BigInt    @id @default(autoincrement())
+  uuidExterno       String    @default(dbgenerated("uuid_generate_v4()")) @db.Uuid @map("uuid_externo")
+  cnpj              String    @unique @db.VarChar(18)
+  razaoSocial       String    @db.VarChar(300) @map("razao_social")
+  nomeFantasia      String?   @db.VarChar(300) @map("nome_fantasia")
+  cnes              String?   @db.VarChar(20)
+  registroAns       String?   @db.VarChar(20) @map("registro_ans")
+  configuracoes     Json      @default("{}") @db.JsonB
+  versaoTissPadrao  String    @default("4.01.00") @db.VarChar(10) @map("versao_tiss_padrao")
+  ativo             Boolean   @default(true)
+  createdAt         DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt         DateTime? @updatedAt @db.Timestamptz @map("updated_at")
+  deletedAt         DateTime? @db.Timestamptz @map("deleted_at")
+
+  usuarios          Usuario[]
+  perfis            Perfil[]
+
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Usuários
+// ─────────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id                  BigInt    @id @default(autoincrement())
+  uuidExterno         String    @default(dbgenerated("uuid_generate_v4()")) @db.Uuid @map("uuid_externo")
+  tenantId            BigInt    @map("tenant_id")
+  email               String    @db.VarChar(200)
+  senhaHash           String?   @db.VarChar(255) @map("senha_hash")
+  mfaSecret           String?   @db.VarChar(255) @map("mfa_secret")
+  mfaHabilitado       Boolean   @default(false) @map("mfa_habilitado")
+  // FK lógica para `prestadores` será materializada na Fase 3 (cadastros).
+  // Hoje fica como BigInt opcional sem relação — não há tabela alvo ainda.
+  prestadorId         BigInt?   @map("prestador_id")
+  nome                String    @db.VarChar(300)
+  ativo               Boolean   @default(true)
+  ultimoLoginEm       DateTime? @db.Timestamptz @map("ultimo_login_em")
+  ultimoLoginIp       String?   @db.Inet @map("ultimo_login_ip")
+  tentativasLogin     Int       @default(0) @map("tentativas_login")
+  bloqueadoAte        DateTime? @db.Timestamptz @map("bloqueado_ate")
+  precisaTrocarSenha  Boolean   @default(true) @map("precisa_trocar_senha")
+  createdAt           DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt           DateTime? @updatedAt @db.Timestamptz @map("updated_at")
+  deletedAt           DateTime? @db.Timestamptz @map("deleted_at")
+
+  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, map: "fk_usuarios_tenant_id")
+  perfis              UsuarioPerfil[]
+  sessoesAtivas       SessaoAtiva[]
+
+  @@unique([tenantId, email], map: "uq_usuarios_email_tenant")
+  @@index([tenantId], map: "ix_usuarios_tenant")
+  @@index([prestadorId], map: "ix_usuarios_prestador")
+  @@map("usuarios")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Perfis (roles) e Permissões
+// ─────────────────────────────────────────────────────────────────────
+
+model Perfil {
+  id          BigInt   @id @default(autoincrement())
+  tenantId    BigInt   @map("tenant_id")
+  codigo      String   @db.VarChar(50)
+  nome        String   @db.VarChar(120)
+  descricao   String?  @db.VarChar(500)
+  ativo       Boolean  @default(true)
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict, map: "fk_perfis_tenant_id")
+  usuarios    UsuarioPerfil[]
+  permissoes  PerfilPermissao[]
+
+  @@unique([tenantId, codigo], map: "uq_perfis_codigo_tenant")
+  @@map("perfis")
+}
+
+model Permissao {
+  id         BigInt   @id @default(autoincrement())
+  recurso    String   @db.VarChar(80)
+  acao       String   @db.VarChar(40)
+  descricao  String?  @db.VarChar(300)
+
+  perfis     PerfilPermissao[]
+
+  @@unique([recurso, acao], map: "uq_permissoes")
+  @@map("permissoes")
+}
+
+model UsuarioPerfil {
+  usuarioId  BigInt @map("usuario_id")
+  perfilId   BigInt @map("perfil_id")
+
+  usuario    Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade, map: "fk_usuarios_perfis_usuario_id")
+  perfil     Perfil  @relation(fields: [perfilId], references: [id], onDelete: Cascade, map: "fk_usuarios_perfis_perfil_id")
+
+  @@id([usuarioId, perfilId])
+  @@map("usuarios_perfis")
+}
+
+model PerfilPermissao {
+  perfilId     BigInt @map("perfil_id")
+  permissaoId  BigInt @map("permissao_id")
+
+  perfil       Perfil    @relation(fields: [perfilId], references: [id], onDelete: Cascade, map: "fk_perfis_permissoes_perfil_id")
+  permissao    Permissao @relation(fields: [permissaoId], references: [id], onDelete: Cascade, map: "fk_perfis_permissoes_permissao_id")
+
+  @@id([perfilId, permissaoId])
+  @@map("perfis_permissoes")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Sessões ativas (refresh tokens)
+// ─────────────────────────────────────────────────────────────────────
+
+model SessaoAtiva {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  usuarioId         BigInt    @map("usuario_id")
+  refreshTokenHash  String    @db.VarChar(255) @map("refresh_token_hash")
+  ip                String?   @db.Inet
+  userAgent         String?   @db.Text @map("user_agent")
+  expiraEm          DateTime  @db.Timestamptz @map("expira_em")
+  revogadaEm        DateTime? @db.Timestamptz @map("revogada_em")
+  createdAt         DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  usuario           Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, map: "fk_sessoes_ativas_usuario_id")
+
+  @@index([usuarioId], map: "ix_sessoes_usuario")
+  @@map("sessoes_ativas")
+}
