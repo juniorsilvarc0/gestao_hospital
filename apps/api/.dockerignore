@@ -1,0 +1,37 @@
+# HMS-BR — apps/api/.dockerignore
+# Mantém o build context da API enxuto.
+
+# Node / pnpm
+node_modules
+**/node_modules
+.pnpm-store
+.turbo
+*.tsbuildinfo
+
+# Builds e artefatos
+dist
+build
+coverage
+*.log
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Env (usar env_file no compose, não embutir na imagem)
+.env
+.env.*
+!.env.example
+
+# Python (não pertence aqui, mas defesa em profundidade)
+__pycache__
+*.pyc
+.venv
+venv
+
+# Editores / SO
+.vscode
+.idea
+.DS_Store
+Thumbs.db

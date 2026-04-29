@@ -1,0 +1,42 @@
+# HMS-BR — apps/ai-service/.dockerignore
+# Mantém o build context do AI service enxuto.
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+venv
+.eggs
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Node (defesa em profundidade)
+node_modules
+**/node_modules
+.turbo
+
+# Builds e artefatos
+dist
+build
+coverage
+*.log
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Editores / SO
+.vscode
+.idea
+.DS_Store
+Thumbs.db

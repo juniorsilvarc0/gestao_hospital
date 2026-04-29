@@ -1,0 +1,240 @@
+# HMS-BR — Stack de desenvolvimento (Docker-first).
+# Tudo roda em containers. Em uma máquina limpa (apenas Docker), `make up`
+# levanta a stack inteira em localhost. Não usamos `version:` (Compose v2).
+# Documentação obrigatória de leitura: CLAUDE.md (raiz) e skills/fase-01-fundacao/SKILL.md.
+
+name: hms-br
+
+networks:
+  default:
+    name: hms-br_default
+    driver: bridge
+
+volumes:
+  pg_data:
+    name: hms-br_pg_data
+  redis_data:
+    name: hms-br_redis_data
+  minio_data:
+    name: hms-br_minio_data
+  api_node_modules:
+    name: hms-br_api_node_modules
+  web_node_modules:
+    name: hms-br_web_node_modules
+
+services:
+  # ─────────────────────────────────────────────────────────────────────
+  # PostgreSQL 16 — banco transacional (extensions habilitadas via init.sql)
+  # ─────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: hms-br-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hms_dev_pwd}
+      POSTGRES_DB: ${POSTGRES_DB:-hms}
+      TZ: ${TZ:-America/Sao_Paulo}
+      PGTZ: ${TZ:-America/Sao_Paulo}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-hms} -d $${POSTGRES_DB:-hms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Redis 7 — cache, filas BullMQ, locks distribuídos, pub/sub Socket.IO
+  # ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.4-alpine
+    container_name: hms-br-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # ─────────────────────────────────────────────────────────────────────
+  # MinIO — storage S3-compat (laudos, anexos SAME, documentos digitalizados)
+  # ─────────────────────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:RELEASE.2024-12-13T22-19-12Z
+    container_name: hms-br-minio
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hms_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hms_minio_dev_pwd}
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      # A imagem do MinIO traz wget — usamos o endpoint oficial de health.
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────────────────
+  # MailHog — SMTP fake para dev (UI em :8025, SMTP em :1025)
+  # Em Apple Silicon a imagem v1.0.1 só existe linux/amd64.
+  # ─────────────────────────────────────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: hms-br-mailhog
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8025/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Adminer — UI de inspeção do Postgres
+  # ─────────────────────────────────────────────────────────────────────
+  adminer:
+    image: adminer:4.8.1
+    container_name: hms-br-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────────────────
+  # API — NestJS (núcleo HMS-BR)
+  # build context = raiz do monorepo (precisa enxergar packages/* e workspace).
+  # Volume nomeado para node_modules evita conflito de arquitetura host vs container.
+  # ─────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    image: hms-br/api:dev
+    container_name: hms-br-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${API_PORT:-3000}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - ./prisma:/app/prisma
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./package.json:/app/package.json
+      - ./turbo.json:/app/turbo.json
+      - api_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    command: ["pnpm", "--filter", "@hms/api", "start:dev"]
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Web — React + Vite (SPA admin/clínico)
+  # ─────────────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: dev
+    image: hms-br/web:dev
+    container_name: hms-br-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./package.json:/app/package.json
+      - ./turbo.json:/app/turbo.json
+      - web_node_modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:5173/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    command: ["pnpm", "--filter", "@hms/web", "dev", "--host", "0.0.0.0"]
+
+  # ─────────────────────────────────────────────────────────────────────
+  # AI Service — FastAPI (OCR, NLP). Desativado por padrão; ativar com:
+  #   docker compose --profile ai up -d ai-service
+  # Habilitado de fato a partir da Fase 11.
+  # ─────────────────────────────────────────────────────────────────────
+  ai-service:
+    build:
+      context: ./apps/ai-service
+    image: hms-br/ai-service:dev
+    container_name: hms-br-ai-service
+    restart: unless-stopped
+    profiles: ["ai"]
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; urllib.request.urlopen(\"http://localhost:8000/healthz\", timeout=3)' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
