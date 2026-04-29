@@ -1,0 +1,54 @@
+# Git / VCS
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+**/node_modules
+.pnpm-store
+.turbo
+**/dist
+**/build
+**/coverage
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+**/*.log
+logs/
+
+# Docs (não precisam dentro das imagens)
+docs/
+README.md
+*.md
+!CLAUDE.md
+
+# Testes (mantemos para CI; build de produção remove via stage)
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/coverage
+
+# Python venvs (ai-service)
+.venv
+venv
+__pycache__
+*.pyc
+
+# CI
+.github
+
+# Outros
+infra/k8s
+infra/terraform

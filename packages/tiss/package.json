@@ -1,0 +1,6 @@
+{
+  "name": "@hms/tiss",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lib de geração e validação de XML TISS (ANS). Conteúdo real na Fase 8."
+}

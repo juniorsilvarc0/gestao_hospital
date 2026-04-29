@@ -1,0 +1,6 @@
+{
+  "name": "@hms/shared-types",
+  "version": "0.0.1",
+  "private": true,
+  "description": "DTOs e tipos compartilhados entre apps/api e apps/web."
+}

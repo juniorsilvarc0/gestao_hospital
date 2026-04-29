@@ -1,0 +1,7 @@
+[project]
+name = "hms-ai-service"
+version = "0.0.1"
+description = "HMS-BR AI microservice (FastAPI). Placeholder — ativado a partir da Fase 11."
+requires-python = ">=3.12"
+authors = [{ name = "HMS-BR" }]
+license = { text = "UNLICENSED" }

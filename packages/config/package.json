@@ -1,0 +1,6 @@
+{
+  "name": "@hms/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Configurações compartilhadas (placeholder). Hoje os configs base estão na raiz; este package fica para presets reutilizáveis (ESLint/Prettier/tsconfig por tipo de app)."
+}

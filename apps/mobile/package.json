@@ -1,0 +1,6 @@
+{
+  "name": "@hms/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "description": "HMS-BR Mobile (React Native). Placeholder — Fase 12+. NÃO dockerizado (RN é nativo)."
+}

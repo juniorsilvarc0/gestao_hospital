@@ -1,0 +1,52 @@
+# ── Node / pnpm / turbo ──
+node_modules/
+.pnpm-store/
+.npm/
+.turbo/
+dist/
+build/
+coverage/
+.cache/
+*.tsbuildinfo
+
+# ── Env / secrets ──
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# ── Editores / OS ──
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ──
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# ── Python (apps/ai-service) ──
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Husky ──
+.husky/_
+
+# ── Material original já consumido ──
+files.zip
+
+# ── Diretórios gerados pelo nest/vite ──
+.nest/
+.vite/

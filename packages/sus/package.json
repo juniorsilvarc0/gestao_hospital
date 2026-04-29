@@ -1,0 +1,6 @@
+{
+  "name": "@hms/sus",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lib BPA/AIH/APAC para faturamento SUS. Conteúdo real na Fase 8."
+}
