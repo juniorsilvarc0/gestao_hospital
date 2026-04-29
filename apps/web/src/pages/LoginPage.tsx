@@ -1,8 +1,24 @@
-import { useState } from 'react';
+/**
+ * LoginPage — substituição do mock de Fase 1 por chamada real à API.
+ *
+ * Fluxo:
+ *  1. Step `credentials`: tenantCode + e-mail + senha.
+ *  2. Backend pode responder `{ mfaRequired: true }` → step `mfa` pede 6 dígitos.
+ *  3. Em sucesso: tokens + user gravados no auth-store, navega para a página
+ *     de origem (`?redirect=`) ou `/`.
+ *
+ * RN-SEG aplicáveis:
+ *  - Mensagem de erro genérica em credenciais inválidas (não revelar se
+ *    e-mail existe — RN-LGP-05/RN-SEG-03).
+ *  - Bloqueios (UserLocked/IpLocked) tratados com mensagem clara para o
+ *    usuário operar (procurar admin).
+ */
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, Hospital } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -13,60 +29,202 @@ import {
   Input,
   Label,
 } from '@/components/ui';
+import { ApiError } from '@/lib/api-client';
+import { postLogin } from '@/lib/auth-api';
+import { useAuthStore } from '@/stores/auth-store';
+import { isMfaRequiredResponse } from '@/types/auth';
+import type { LoginRequest } from '@/types/auth';
+import { useToast } from '@/components/Toast';
 
-/**
- * Schema do formulário de login.
- * Em Fase 2 será validado também no backend (`packages/shared-types`).
- */
-const loginSchema = z.object({
-  email: z
+const credentialsSchema = z.object({
+  tenantCode: z
     .string()
-    .min(1, 'Informe o e-mail.')
-    .email('E-mail inválido.'),
+    .min(1, 'Informe o código do hospital/tenant.')
+    .max(64, 'Código muito longo.'),
+  email: z.string().min(1, 'Informe o e-mail.').email('E-mail inválido.'),
   senha: z
     .string()
     .min(8, 'A senha deve ter ao menos 8 caracteres.')
     .max(128, 'Senha muito longa.'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type CredentialsValues = z.infer<typeof credentialsSchema>;
 
-/**
- * Login mock de Fase 1.
- *
- * O submit resolve um Promise local após ~500ms — não há chamada de API.
- * Quando a Fase 2 (autenticação real) chegar, basta trocar este handler para
- * `apiPost('/auth/login', values)` (ver `@/lib/api-client`).
- */
+const mfaSchema = z.object({
+  mfaCode: z
+    .string()
+    .regex(/^\d{6}$/u, 'Informe os 6 dígitos do app autenticador.'),
+});
+
+type MfaValues = z.infer<typeof mfaSchema>;
+
+type Step = 'credentials' | 'mfa';
+
+const DEFAULT_TENANT_CODE = import.meta.env.DEV ? 'dev' : '';
+
+function getRedirectTo(search: string): string {
+  const params = new URLSearchParams(search);
+  const redirect = params.get('redirect');
+  // Aceita só caminhos absolutos internos, evita open-redirect.
+  if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
+    return redirect;
+  }
+  return '/';
+}
+
 export function LoginPage(): JSX.Element {
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { show: showToast } = useToast();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const loginAction = useAuthStore((s) => s.login);
+  const setMfaPending = useAuthStore((s) => s.setMfaPending);
+  const [step, setStep] = useState<Step>('credentials');
+  const [pendingCredentials, setPendingCredentials] = useState<LoginRequest | null>(
+    null,
+  );
+  const mfaInputRef = useRef<HTMLInputElement | null>(null);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', senha: '' },
+  const credentialsForm = useForm<CredentialsValues>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: { tenantCode: DEFAULT_TENANT_CODE, email: '', senha: '' },
     mode: 'onBlur',
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = form;
+  const mfaForm = useForm<MfaValues>({
+    resolver: zodResolver(mfaSchema),
+    defaultValues: { mfaCode: '' },
+    mode: 'onSubmit',
+  });
 
-  async function onSubmit(values: LoginFormValues): Promise<void> {
-    setFeedback(null);
-    // Latência simulada — Fase 2 substitui por chamada real à API.
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 500);
+  // Auto-focus no campo MFA quando o step muda.
+  useEffect(() => {
+    if (step === 'mfa') {
+      mfaInputRef.current?.focus();
+    }
+  }, [step]);
+
+  if (isAuthenticated) {
+    return <Navigate to={getRedirectTo(location.search)} replace />;
+  }
+
+  function handleApiError(err: unknown, fallback: string): void {
+    if (err instanceof ApiError) {
+      // RN-SEG: nunca confirmar existência de e-mail/tenant. Códigos
+      // específicos são tratados; demais entram no fallback.
+      const code = err.code ?? '';
+      let title = err.title ?? 'Não foi possível entrar';
+      let description = err.detail ?? fallback;
+
+      if (
+        code === 'AUTH_INVALID_CREDENTIALS' ||
+        code === 'AUTH_TENANT_NOT_FOUND' ||
+        err.status === 401
+      ) {
+        title = 'Credenciais inválidas';
+        description = 'Verifique tenant, e-mail e senha e tente novamente.';
+      } else if (code === 'AUTH_USER_LOCKED') {
+        title = 'Conta bloqueada';
+        description =
+          'Sua conta foi temporariamente bloqueada por excesso de tentativas. Aguarde 15 minutos.';
+      } else if (code === 'AUTH_IP_LOCKED') {
+        title = 'Acesso bloqueado';
+        description =
+          'Muitas tentativas a partir deste local. Aguarde alguns minutos.';
+      } else if (code === 'AUTH_USER_INACTIVE') {
+        title = 'Usuário inativo';
+        description = 'Procure o administrador do sistema.';
+      }
+      showToast({ variant: 'destructive', title, description });
+      return;
+    }
+    showToast({ variant: 'destructive', title: 'Erro', description: fallback });
+  }
+
+  async function onSubmitCredentials(values: CredentialsValues): Promise<void> {
+    try {
+      const response = await postLogin({
+        tenantCode: values.tenantCode.trim(),
+        email: values.email.trim(),
+        senha: values.senha,
+      });
+      if (isMfaRequiredResponse(response)) {
+        setMfaPending(true);
+        setPendingCredentials({
+          tenantCode: values.tenantCode.trim(),
+          email: values.email.trim(),
+          senha: values.senha,
+        });
+        setStep('mfa');
+        showToast({
+          variant: 'info',
+          title: 'Verificação adicional',
+          description:
+            'Informe o código de 6 dígitos do seu app autenticador (Google Authenticator, Authy, 1Password).',
+        });
+        return;
+      }
+      // Sucesso direto (sem MFA).
+      loginAction({
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      });
+      navigate(getRedirectTo(location.search), { replace: true });
+    } catch (err) {
+      handleApiError(err, 'Falha ao entrar. Tente novamente.');
+    }
+  }
+
+  async function onSubmitMfa(values: MfaValues): Promise<void> {
+    if (!pendingCredentials) {
+      setStep('credentials');
+      return;
+    }
+    try {
+      const response = await postLogin({
+        ...pendingCredentials,
+        mfaCode: values.mfaCode,
+      });
+      if (isMfaRequiredResponse(response)) {
+        showToast({
+          variant: 'destructive',
+          title: 'Código inválido',
+          description: 'O código informado não foi aceito. Tente novamente.',
+        });
+        mfaForm.reset({ mfaCode: '' });
+        return;
+      }
+      loginAction({
+        user: response.user,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      });
+      setMfaPending(false);
+      setPendingCredentials(null);
+      navigate(getRedirectTo(location.search), { replace: true });
+    } catch (err) {
+      handleApiError(err, 'Falha ao validar o código MFA.');
+    }
+  }
+
+  function handleSwitchTenant(): void {
+    setStep('credentials');
+    setPendingCredentials(null);
+    setMfaPending(false);
+    credentialsForm.reset({
+      tenantCode: '',
+      email: credentialsForm.getValues('email'),
+      senha: '',
     });
-    // `console.warn` é permitido pelo preset raiz (`no-console: warn` allow list).
-    console.warn(
-      '[HMS-BR] Login fake — autenticação real será implementada na Fase 2.',
-      { email: values.email },
-    );
-    setFeedback(
-      'Login fake — Fase 2 implementa autenticação real (JWT + MFA + RBAC).',
-    );
+    mfaForm.reset({ mfaCode: '' });
+  }
+
+  function handleBackFromMfa(): void {
+    setStep('credentials');
+    setPendingCredentials(null);
+    setMfaPending(false);
+    mfaForm.reset({ mfaCode: '' });
   }
 
   return (
@@ -84,95 +242,218 @@ export function LoginPage(): JSX.Element {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Acessar o sistema</CardTitle>
-            <CardDescription>
-              Use seu e-mail corporativo e senha. MFA será exigido após Fase 2.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              noValidate
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4"
-              aria-label="Formulário de login"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="username"
-                  placeholder="seu.usuario@hospital.com.br"
-                  aria-invalid={errors.email ? true : false}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
-                  {...register('email')}
-                />
-                {errors.email ? (
-                  <p
-                    id="email-error"
-                    role="alert"
-                    className="text-sm text-destructive"
-                  >
-                    {errors.email.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="senha">Senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  autoComplete="current-password"
-                  aria-invalid={errors.senha ? true : false}
-                  aria-describedby={errors.senha ? 'senha-error' : undefined}
-                  {...register('senha')}
-                />
-                {errors.senha ? (
-                  <p
-                    id="senha-error"
-                    role="alert"
-                    className="text-sm text-destructive"
-                  >
-                    {errors.senha.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-                aria-busy={isSubmitting}
+        {step === 'credentials' ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Acessar o sistema</CardTitle>
+              <CardDescription>
+                Use seu código de tenant, e-mail corporativo e senha.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                noValidate
+                onSubmit={credentialsForm.handleSubmit(onSubmitCredentials)}
+                className="space-y-4"
+                aria-label="Formulário de login"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 aria-hidden="true" className="animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  'Entrar'
-                )}
-              </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="tenantCode">Código do tenant</Label>
+                  <Input
+                    id="tenantCode"
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="ex.: hospital-sao-judas"
+                    aria-invalid={
+                      credentialsForm.formState.errors.tenantCode ? true : false
+                    }
+                    aria-describedby={
+                      credentialsForm.formState.errors.tenantCode
+                        ? 'tenantCode-error'
+                        : undefined
+                    }
+                    {...credentialsForm.register('tenantCode')}
+                  />
+                  {credentialsForm.formState.errors.tenantCode ? (
+                    <p
+                      id="tenantCode-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
+                      {credentialsForm.formState.errors.tenantCode.message}
+                    </p>
+                  ) : null}
+                </div>
 
-              {feedback ? (
-                <p
-                  role="status"
-                  className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-3 text-center text-sm text-muted-foreground"
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="username"
+                    placeholder="seu.usuario@hospital.com.br"
+                    aria-invalid={
+                      credentialsForm.formState.errors.email ? true : false
+                    }
+                    aria-describedby={
+                      credentialsForm.formState.errors.email
+                        ? 'email-error'
+                        : undefined
+                    }
+                    {...credentialsForm.register('email')}
+                  />
+                  {credentialsForm.formState.errors.email ? (
+                    <p
+                      id="email-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
+                      {credentialsForm.formState.errors.email.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="senha">Senha</Label>
+                    <Link
+                      to="/auth/forgot-password"
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Esqueci minha senha
+                    </Link>
+                  </div>
+                  <Input
+                    id="senha"
+                    type="password"
+                    autoComplete="current-password"
+                    aria-invalid={
+                      credentialsForm.formState.errors.senha ? true : false
+                    }
+                    aria-describedby={
+                      credentialsForm.formState.errors.senha
+                        ? 'senha-error'
+                        : undefined
+                    }
+                    {...credentialsForm.register('senha')}
+                  />
+                  {credentialsForm.formState.errors.senha ? (
+                    <p
+                      id="senha-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
+                      {credentialsForm.formState.errors.senha.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={credentialsForm.formState.isSubmitting}
+                  aria-busy={credentialsForm.formState.isSubmitting}
                 >
-                  {feedback}
-                </p>
-              ) : null}
-            </form>
-          </CardContent>
-        </Card>
+                  {credentialsForm.formState.isSubmitting ? (
+                    <>
+                      <Loader2 aria-hidden="true" className="animate-spin" />
+                      Continuando...
+                    </>
+                  ) : (
+                    'Continuar'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Verificação MFA</CardTitle>
+              <CardDescription>
+                Informe o código de 6 dígitos gerado pelo seu app autenticador.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                noValidate
+                onSubmit={mfaForm.handleSubmit(onSubmitMfa)}
+                className="space-y-4"
+                aria-label="Formulário de MFA"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="mfaCode">Código de 6 dígitos</Label>
+                  <Input
+                    id="mfaCode"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="123456"
+                    maxLength={6}
+                    aria-invalid={mfaForm.formState.errors.mfaCode ? true : false}
+                    aria-describedby={
+                      mfaForm.formState.errors.mfaCode ? 'mfaCode-error' : undefined
+                    }
+                    {...mfaForm.register('mfaCode')}
+                    ref={(el) => {
+                      mfaForm.register('mfaCode').ref(el);
+                      mfaInputRef.current = el;
+                    }}
+                  />
+                  {mfaForm.formState.errors.mfaCode ? (
+                    <p
+                      id="mfaCode-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
+                      {mfaForm.formState.errors.mfaCode.message}
+                    </p>
+                  ) : null}
+                </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Fase 1 — esqueleto frontend. Compliance LGPD/TISS/ICP-Brasil ativo a partir
-          das fases seguintes.
-        </p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="sm:flex-1"
+                    onClick={handleBackFromMfa}
+                    disabled={mfaForm.formState.isSubmitting}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="sm:flex-1"
+                    disabled={mfaForm.formState.isSubmitting}
+                    aria-busy={mfaForm.formState.isSubmitting}
+                  >
+                    {mfaForm.formState.isSubmitting ? (
+                      <>
+                        <Loader2 aria-hidden="true" className="animate-spin" />
+                        Validando...
+                      </>
+                    ) : (
+                      'Entrar'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
+          <button
+            type="button"
+            className="font-medium text-primary hover:underline"
+            onClick={handleSwitchTenant}
+          >
+            Trocar tenant
+          </button>
+          <p>
+            Compliance LGPD/TISS/ICP-Brasil. Acesso registrado em audit log.
+          </p>
+        </div>
       </div>
     </main>
   );

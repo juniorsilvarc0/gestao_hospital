@@ -9,3 +9,4 @@ export {
   CardDescription,
   CardContent,
 } from './card';
+export { Skeleton } from './skeleton';
