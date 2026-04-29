@@ -1,14 +1,23 @@
 /**
- * Seed Fase 1.
+ * Seed Fase 1 + Fase 2 (Auth Trilha A).
  *
- * Popula o mínimo necessário para o sistema subir e a Fase 2
- * conseguir autenticar:
- *   - 1 tenant `dev`
+ * Popula o mínimo necessário para o sistema autenticar:
+ *   - 1 tenant `dev` (codigo = 'dev')
  *   - ~15 permissões essenciais (cadastros básicos)
  *   - 8 perfis padrão (ADMIN, MEDICO, ENFERMEIRO, FARMACEUTICO,
  *     RECEPCAO, FATURAMENTO, AUDITOR, FINANCEIRO)
  *   - ADMIN recebe TODAS as permissões
  *   - 1 usuário admin (admin@hms.local) com `precisa_trocar_senha=true`
+ *
+ * RLS-aware (Fase 2): a partir do P0 de auditoria/RLS, a app conecta
+ * como `hms_app` (NOSUPERUSER, NOBYPASSRLS). Tabelas com `tenant_id`
+ * (`usuarios`, `perfis`) exigem `SET LOCAL app.current_tenant_id`
+ * dentro de uma transação para que INSERT/SELECT funcione.
+ *
+ * Estratégia:
+ *   - tenants: sem RLS → upsert direto.
+ *   - permissoes: catálogo global → sem RLS → upsert direto.
+ *   - perfis + usuarios + joins: dentro de `$transaction` com SET LOCAL.
  *
  * Idempotente: re-rodar `make seed` não duplica registros (upsert).
  *
@@ -21,6 +30,8 @@ const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = 'admin@hms.local';
 const ADMIN_TEMP_PASSWORD = 'ChangeMe!2026';
+const TENANT_CODIGO = 'dev';
+const TENANT_CNPJ = '00.000.000/0001-91';
 
 const PERMISSIONS: ReadonlyArray<{
   recurso: string;
@@ -124,22 +135,26 @@ const PROFILES: ReadonlyArray<{
 ];
 
 async function main(): Promise<void> {
-  console.warn('[seed] Starting Fase 1 seed (idempotent)...');
+  console.warn('[seed] Starting Fase 1+2 seed (idempotent, RLS-aware)...');
 
+  // ── Tenants (sem RLS — upsert direto) ──
   const tenant = await prisma.tenant.upsert({
-    where: { cnpj: '00.000.000/0001-91' },
-    update: {},
+    where: { cnpj: TENANT_CNPJ },
+    update: { codigo: TENANT_CODIGO },
     create: {
-      cnpj: '00.000.000/0001-91',
+      cnpj: TENANT_CNPJ,
+      codigo: TENANT_CODIGO,
       razaoSocial: 'Hospital Dev',
       nomeFantasia: 'HMS-BR Dev',
       cnes: '0000000',
-      configuracoes: { codigo: 'dev', timezone: 'America/Sao_Paulo' },
+      configuracoes: { codigo: TENANT_CODIGO, timezone: 'America/Sao_Paulo' },
     },
   });
-  console.warn(`[seed] tenant id=${tenant.id} (${tenant.razaoSocial}) ok`);
+  console.warn(
+    `[seed] tenant id=${tenant.id} codigo=${tenant.codigo} (${tenant.razaoSocial}) ok`,
+  );
 
-  // Permissões — upsert por (recurso, acao).
+  // ── Permissões (catálogo global, sem RLS) ──
   for (const permission of PERMISSIONS) {
     await prisma.permissao.upsert({
       where: {
@@ -155,31 +170,37 @@ async function main(): Promise<void> {
   const allPermissions = await prisma.permissao.findMany();
   console.warn(`[seed] permissoes (${allPermissions.length}) ok`);
 
-  // Perfis — upsert por (tenantId, codigo).
-  for (const profile of PROFILES) {
-    await prisma.perfil.upsert({
-      where: {
-        tenantId_codigo: {
-          tenantId: tenant.id,
-          codigo: profile.codigo,
+  // ── Perfis + Usuário admin + joins (RLS) ──
+  // Toda escrita em `perfis` e `usuarios` precisa de `SET LOCAL`.
+  // perfis_permissoes não tem tenant_id direto (sem RLS) mas vai junto
+  // por simplicidade e atomicidade.
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe(
+      `SET LOCAL app.current_tenant_id = '${tenant.id.toString()}'`,
+    );
+
+    for (const profile of PROFILES) {
+      await tx.perfil.upsert({
+        where: {
+          tenantId_codigo: {
+            tenantId: tenant.id,
+            codigo: profile.codigo,
+          },
         },
-      },
-      update: { nome: profile.nome, descricao: profile.descricao },
-      create: { ...profile, tenantId: tenant.id },
+        update: { nome: profile.nome, descricao: profile.descricao },
+        create: { ...profile, tenantId: tenant.id },
+      });
+    }
+    console.warn(`[seed] perfis (${PROFILES.length}) ok`);
+
+    const adminProfile = await tx.perfil.findFirstOrThrow({
+      where: { tenantId: tenant.id, codigo: 'ADMIN' },
     });
-  }
-  console.warn(`[seed] perfis (${PROFILES.length}) ok`);
 
-  const adminProfile = await prisma.perfil.findUniqueOrThrow({
-    where: {
-      tenantId_codigo: { tenantId: tenant.id, codigo: 'ADMIN' },
-    },
-  });
-
-  // Vincula TODAS as permissões ao perfil ADMIN.
-  await prisma.$transaction(
-    allPermissions.map((permission) =>
-      prisma.perfilPermissao.upsert({
+    // perfis_permissoes — sem tenant_id, sem RLS direta. Mas mantemos
+    // dentro da transação para atomicidade.
+    for (const permission of allPermissions) {
+      await tx.perfilPermissao.upsert({
         where: {
           perfilId_permissaoId: {
             perfilId: adminProfile.id,
@@ -191,56 +212,60 @@ async function main(): Promise<void> {
           perfilId: adminProfile.id,
           permissaoId: permission.id,
         },
-      }),
-    ),
-  );
-  console.warn(`[seed] perfis_permissoes ADMIN <- ${allPermissions.length} ok`);
+      });
+    }
+    console.warn(
+      `[seed] perfis_permissoes ADMIN <- ${allPermissions.length} ok`,
+    );
 
-  // Usuário admin com Argon2id.
-  // m=64MB, t=3, p=4 (RNF-002).
-  const senhaHash = await argon2.hash(ADMIN_TEMP_PASSWORD, {
-    type: argon2.argon2id,
-    memoryCost: 64 * 1024,
-    timeCost: 3,
-    parallelism: 4,
-  });
+    // Usuário admin com Argon2id (m=64MB, t=3, p=4 — RNF-002).
+    const senhaHash = await argon2.hash(ADMIN_TEMP_PASSWORD, {
+      type: argon2.argon2id,
+      memoryCost: 64 * 1024,
+      timeCost: 3,
+      parallelism: 4,
+    });
 
-  const adminUser = await prisma.usuario.upsert({
-    where: {
-      tenantId_email: { tenantId: tenant.id, email: ADMIN_EMAIL },
-    },
-    update: {},
-    create: {
-      tenantId: tenant.id,
-      email: ADMIN_EMAIL,
-      nome: 'Administrador HMS-BR',
-      senhaHash,
-      precisaTrocarSenha: true,
-      ativo: true,
-    },
-  });
-  console.warn(`[seed] usuario admin id=${adminUser.id} (${adminUser.email}) ok`);
+    const adminUser = await tx.usuario.upsert({
+      where: {
+        tenantId_email: { tenantId: tenant.id, email: ADMIN_EMAIL },
+      },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        email: ADMIN_EMAIL,
+        nome: 'Administrador HMS-BR',
+        senhaHash,
+        precisaTrocarSenha: true,
+        ativo: true,
+      },
+    });
+    console.warn(
+      `[seed] usuario admin id=${adminUser.id} (${adminUser.email}) ok`,
+    );
 
-  await prisma.usuarioPerfil.upsert({
-    where: {
-      usuarioId_perfilId: {
+    await tx.usuarioPerfil.upsert({
+      where: {
+        usuarioId_perfilId: {
+          usuarioId: adminUser.id,
+          perfilId: adminProfile.id,
+        },
+      },
+      update: {},
+      create: {
         usuarioId: adminUser.id,
         perfilId: adminProfile.id,
       },
-    },
-    update: {},
-    create: {
-      usuarioId: adminUser.id,
-      perfilId: adminProfile.id,
-    },
+    });
+    console.warn('[seed] usuarios_perfis admin -> ADMIN ok');
   });
-  console.warn('[seed] usuarios_perfis admin -> ADMIN ok');
 
   console.warn('[seed] Done.');
   console.warn('');
   console.warn('  Login:');
-  console.warn(`    email:    ${ADMIN_EMAIL}`);
-  console.warn(`    password: ${ADMIN_TEMP_PASSWORD}`);
+  console.warn(`    tenantCode: ${TENANT_CODIGO}`);
+  console.warn(`    email:      ${ADMIN_EMAIL}`);
+  console.warn(`    password:   ${ADMIN_TEMP_PASSWORD}`);
   console.warn('  (precisa trocar senha no primeiro login)');
 }
 

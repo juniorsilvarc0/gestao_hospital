@@ -36,6 +36,7 @@ model Tenant {
   id                BigInt    @id @default(autoincrement())
   uuidExterno       String    @default(dbgenerated("uuid_generate_v4()")) @db.Uuid @map("uuid_externo")
   cnpj              String    @unique @db.VarChar(18)
+  codigo            String    @unique(map: "uq_tenants_codigo") @db.VarChar(20)
   razaoSocial       String    @db.VarChar(300) @map("razao_social")
   nomeFantasia      String?   @db.VarChar(300) @map("nome_fantasia")
   cnes              String?   @db.VarChar(20)
@@ -82,6 +83,7 @@ model Usuario {
   tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, map: "fk_usuarios_tenant_id")
   perfis              UsuarioPerfil[]
   sessoesAtivas       SessaoAtiva[]
+  mfaRecoveryCodes    MfaRecoveryCode[]
 
   @@unique([tenantId, email], map: "uq_usuarios_email_tenant")
   @@index([tenantId], map: "ix_usuarios_tenant")
@@ -161,4 +163,29 @@ model SessaoAtiva {
 
   @@index([usuarioId], map: "ix_sessoes_usuario")
   @@map("sessoes_ativas")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// MFA — códigos de recuperação (Trilha B / Fase 2)
+// ─────────────────────────────────────────────────────────────────────
+//
+// Cada usuário recebe N códigos one-time-use ao habilitar MFA. Códigos
+// são entregues em texto-claro APENAS uma vez (resposta do `/enable`)
+// e armazenados aqui hashed com Argon2id. Consumo marca `usedAt`;
+// linhas usadas permanecem por trilha de auditoria. Tabela tem RLS
+// (`tenant_isolation`) — ver migration 20260429040000.
+
+model MfaRecoveryCode {
+  id         BigInt    @id @default(autoincrement())
+  tenantId   BigInt    @map("tenant_id")
+  usuarioId  BigInt    @map("usuario_id")
+  codeHash   String    @db.VarChar(255) @map("code_hash")
+  usedAt     DateTime? @db.Timestamptz @map("used_at")
+  createdAt  DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, map: "fk_mfa_recovery_codes_usuario_id")
+
+  @@index([usuarioId], map: "ix_mfa_rc_usuario")
+  @@index([tenantId], map: "ix_mfa_rc_tenant")
+  @@map("mfa_recovery_codes")
 }
