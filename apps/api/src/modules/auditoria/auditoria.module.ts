@@ -1,8 +1,21 @@
 /**
- * Cross-cutting: Auditoria (LGPD) — placeholder Fase 1.
- * Implementação real começa na Fase 2 (acessos_prontuario, audit log buffer).
+ * Cross-cutting: Auditoria (LGPD).
+ *
+ * Fase 2 — Trilha C: provê `AuditoriaService` para insert manual em
+ * `auditoria_eventos` quando triggers DB não cobrem (ex.: eventos
+ * "lógicos" como `auth.profile.changed`).
+ *
+ * Fases futuras:
+ *   - Fase 5: tabela `acessos_prontuario` (PHI access log).
+ *   - Fase 12: dashboards e exports LGPD.
  */
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 
-@Module({})
+import { AuditoriaService } from './application/auditoria.service';
+
+@Global()
+@Module({
+  providers: [AuditoriaService],
+  exports: [AuditoriaService],
+})
 export class AuditoriaModule {}

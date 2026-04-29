@@ -11,6 +11,7 @@
  * registrados via `configure()`.
  */
 import { Module, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -20,6 +21,11 @@ import { configFactory } from './config/configuration';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
+import { SecurityModule } from './common/security.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { PermissionsGuard } from './common/guards/permissions.guard';
+import { TenantContextInterceptor } from './common/interceptors/tenant-context.interceptor';
+import { SectorFilterInterceptor } from './common/interceptors/sector-filter.interceptor';
 
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -93,6 +99,7 @@ import { BiModule } from './modules/bi/bi.module';
       verboseMemoryLeak: process.env.NODE_ENV !== 'production',
     }),
     PrismaModule,
+    SecurityModule,
     HealthModule,
     // Bounded contexts (placeholders Fase 1).
     AuthModule,
@@ -115,6 +122,18 @@ import { BiModule } from './modules/bi/bi.module';
     SameModule,
     VisitantesModule,
     BiModule,
+  ],
+  providers: [
+    // Ordem importa: JwtAuthGuard popula request.user; PermissionsGuard
+    // depois decide pelo decorator. Guards globais rodam em ordem de
+    // declaração.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
+    // Interceptors: TenantContext envolve TUDO em prisma.$transaction
+    // com SET LOCAL — precisa rodar ANTES de SectorFilter (que faz
+    // queries via prisma.tx()).
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: SectorFilterInterceptor },
   ],
 })
 export class AppModule implements NestModule {

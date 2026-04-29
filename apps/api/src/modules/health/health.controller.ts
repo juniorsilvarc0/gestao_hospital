@@ -21,6 +21,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../../infrastructure/persistence/prisma.service';
+import { Public } from '../../common/decorators/public.decorator';
 
 interface HealthSnapshot {
   status: 'ok' | 'degraded';
@@ -39,6 +40,7 @@ interface ReadinessSnapshot extends HealthSnapshot {
 const API_VERSION = '0.0.1';
 
 @ApiTags('health')
+@Public()
 @Controller({ version: VERSION_NEUTRAL })
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);

@@ -17,6 +17,10 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import {
+  RequestContextStorage,
+  type TransactionalPrismaClient,
+} from '../../common/context/request-context';
 
 // Modelos que carregam `deleted_at` (soft-delete). Demais modelos
 // (perfis/permissoes/joins/sessoes_ativas) são catálogo ou efêmeros e
@@ -65,6 +69,28 @@ export class PrismaService
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
     this.logger.log('Prisma disconnected');
+  }
+
+  /**
+   * Cliente Prisma "ciente do contexto da request".
+   *
+   * - Se houver um `RequestContext` ativo (populado pelo
+   *   `TenantContextInterceptor`), devolve o `tx` da transação dele —
+   *   esse cliente já rodou `SET LOCAL app.current_tenant_id`, então
+   *   o RLS filtra automaticamente toda query subsequente.
+   * - Se não houver contexto (jobs/seed/migrations/admin), devolve o
+   *   próprio singleton — quem chamar é responsável por garantir o
+   *   isolamento (ou rodar como superuser/migration que bypassa RLS).
+   *
+   * Repositórios devem usar SEMPRE `prisma.tx()` em vez do client cru
+   * para ter RLS aplicado de forma transparente.
+   */
+  tx(): TransactionalPrismaClient {
+    const context = RequestContextStorage.get();
+    if (context !== undefined) {
+      return context.tx;
+    }
+    return this as unknown as TransactionalPrismaClient;
   }
 }
 
