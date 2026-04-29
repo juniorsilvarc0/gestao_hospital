@@ -1,0 +1,11 @@
+# HMS-BR — CODEOWNERS (placeholder)
+#
+# Por enquanto, todo o repositório tem o mesmo dono. Regras refinadas
+# por módulo/bounded context (ex.: @time-faturamento para apps/api/src/modules/faturamento)
+# serão adicionadas quando os times forem formados — provavelmente entre
+# Fase 2 e Fase 3.
+#
+# Sintaxe: <pattern> <owner1> <owner2> ...
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @juniorsilvarc0

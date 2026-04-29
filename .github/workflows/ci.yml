@@ -1,0 +1,285 @@
+# HMS-BR — Pipeline de Integração Contínua
+#
+# Princípio: Docker-first. Nada é instalado no runner além do que já vem
+# pronto na imagem do GitHub (Docker, docker compose, buildx). Nenhum
+# `setup-node`, `setup-python` ou `apt install postgres`. O CI deve se
+# comportar exatamente como o dev local: `make up && make migrate && make test`.
+#
+# Documentação obrigatória: CLAUDE.md (raiz §8) e skills/fase-01-fundacao/SKILL.md §8.
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Cancela execuções anteriores do mesmo branch/PR — economiza minutos do CI.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Garante que o compose use o mesmo project name em todos os jobs/steps,
+  # estabilizando os nomes de volumes/redes entre `up` e `run`.
+  COMPOSE_PROJECT_NAME: hms-br
+  # Desabilita prompts interativos do compose v2.
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────
+  # Job 1 — Lint + Typecheck
+  # Faz o build dos targets `dev` (api e web) e roda lint/typecheck
+  # dentro de containers efêmeros (`docker compose run --rm`).
+  # Sem subir Postgres/Redis/MinIO — não é necessário nesta etapa.
+  # ───────────────────────────────────────────────────────────────────
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Prepare .env
+        run: cp .env.example .env
+
+      - name: Build api image (dev target) with GHA cache
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: dev
+          tags: hms-br/api:dev
+          load: true
+          cache-from: type=gha,scope=api-dev
+          cache-to: type=gha,scope=api-dev,mode=max
+
+      - name: Build web image (dev target) with GHA cache
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: dev
+          tags: hms-br/web:dev
+          load: true
+          cache-from: type=gha,scope=web-dev
+          cache-to: type=gha,scope=web-dev,mode=max
+
+      - name: Lint API
+        run: docker compose run --rm --no-deps -T api pnpm --filter @hms/api lint
+
+      - name: Typecheck API
+        run: docker compose run --rm --no-deps -T api pnpm --filter @hms/api typecheck
+
+      - name: Lint Web
+        run: docker compose run --rm --no-deps -T web pnpm --filter @hms/web lint
+
+      - name: Typecheck Web
+        run: docker compose run --rm --no-deps -T web pnpm --filter @hms/web typecheck
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans
+
+  # ───────────────────────────────────────────────────────────────────
+  # Job 2 — Test
+  # Sobe apenas a infra (postgres, redis, minio), aplica migrations com
+  # `prisma migrate deploy` (em CI nunca usar `migrate dev`), roda testes
+  # da api e da web e exporta o coverage como artifact.
+  # ───────────────────────────────────────────────────────────────────
+  test:
+    name: Test (api + web) with infra
+    runs-on: ubuntu-22.04
+    needs: lint-and-typecheck
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Prepare .env
+        run: cp .env.example .env
+
+      # Reaproveita o cache do job anterior — não reconstrói do zero.
+      - name: Restore api dev image (cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: dev
+          tags: hms-br/api:dev
+          load: true
+          cache-from: type=gha,scope=api-dev
+          cache-to: type=gha,scope=api-dev,mode=max
+
+      - name: Restore web dev image (cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: dev
+          tags: hms-br/web:dev
+          load: true
+          cache-from: type=gha,scope=web-dev
+          cache-to: type=gha,scope=web-dev,mode=max
+
+      - name: Start infra (postgres, redis, minio)
+        run: docker compose up -d --wait postgres redis minio
+
+      - name: Show infra status
+        run: docker compose ps
+
+      - name: Prisma generate
+        run: docker compose run --rm --no-deps -T api pnpm --filter @hms/api prisma:generate
+
+      - name: Prisma migrate deploy
+        # `migrate deploy` aplica migrations existentes sem prompts (CI-safe).
+        # `migrate dev` é PROIBIDO em CI: ele cria/edita migrations interativamente.
+        run: docker compose run --rm -T api pnpm --filter @hms/api prisma migrate deploy
+
+      - name: Test API (with coverage)
+        run: docker compose run --rm -T api pnpm --filter @hms/api test --coverage
+
+      - name: Test Web
+        run: docker compose run --rm --no-deps -T web pnpm --filter @hms/web test
+
+      - name: Copy API coverage out of container volume
+        if: always()
+        run: |
+          mkdir -p coverage-out/api coverage-out/web
+          docker compose run --rm --no-deps -T \
+            -v "${{ github.workspace }}/coverage-out/api:/out" \
+            api sh -c "cp -r apps/api/coverage/. /out/ 2>/dev/null || true"
+          docker compose run --rm --no-deps -T \
+            -v "${{ github.workspace }}/coverage-out/web:/out" \
+            web sh -c "cp -r apps/web/coverage/. /out/ 2>/dev/null || true"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: coverage-out/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Dump compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans
+
+  # ───────────────────────────────────────────────────────────────────
+  # Job 3 — Build de imagens runtime (target prod)
+  # Garante que o multi-stage funciona ponta-a-ponta — uma falha aqui
+  # significa imagem de produção quebrada (mesmo que dev passe).
+  # ───────────────────────────────────────────────────────────────────
+  build-images:
+    name: Build runtime images (prod target)
+    runs-on: ubuntu-22.04
+    needs: test
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Build api runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: runtime
+          tags: hms-br/api:ci-${{ github.sha }}
+          load: true
+          cache-from: |
+            type=gha,scope=api-runtime
+            type=gha,scope=api-dev
+          cache-to: type=gha,scope=api-runtime,mode=max
+
+      - name: Build web runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: runtime
+          tags: hms-br/web:ci-${{ github.sha }}
+          load: true
+          cache-from: |
+            type=gha,scope=web-runtime
+            type=gha,scope=web-dev
+          cache-to: type=gha,scope=web-runtime,mode=max
+
+      - name: Inspect built images
+        run: |
+          docker image ls hms-br/api hms-br/web
+
+  # ───────────────────────────────────────────────────────────────────
+  # Job 4 — Migrations status
+  # Bloqueia merges com migrations pendentes/divergentes. Roda apenas
+  # postgres + api (efêmero) — o suficiente para `prisma migrate status`.
+  # ───────────────────────────────────────────────────────────────────
+  migrations-status:
+    name: Prisma migrate status (no drift)
+    runs-on: ubuntu-22.04
+    needs: test
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Prepare .env
+        run: cp .env.example .env
+
+      - name: Restore api dev image (cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: dev
+          tags: hms-br/api:dev
+          load: true
+          cache-from: type=gha,scope=api-dev
+          cache-to: type=gha,scope=api-dev,mode=max
+
+      - name: Start postgres
+        run: docker compose up -d --wait postgres
+
+      - name: Prisma generate
+        run: docker compose run --rm --no-deps -T api pnpm --filter @hms/api prisma:generate
+
+      - name: Prisma migrate status
+        # Falha o job se houver migrations não aplicadas, ausentes ou drift.
+        run: docker compose run --rm -T api pnpm --filter @hms/api prisma migrate status
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans

@@ -1,5 +1,7 @@
 # HMS-BR — Hospital Management System Brasileiro
 
+![CI](https://github.com/juniorsilvarc0/gestao_hospital/actions/workflows/ci.yml/badge.svg)
+
 Sistema multi-tenant de gestão hospitalar com compliance **TISS/SUS/LGPD/ICP-Brasil**, equivalente em escopo ao TOTVS Saúde — Hospitais e Clínicas (Linha RM).
 
 > **Documentação canônica em [`CLAUDE.md`](CLAUDE.md) e [`docs/`](docs/).**
