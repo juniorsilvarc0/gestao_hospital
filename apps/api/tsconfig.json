@@ -1,32 +1,49 @@
 {
-  // Override deliberado em relação a `tsconfig.base.json`:
-  // a base usa NodeNext + ESM, mas o NestJS 10 ainda exige CommonJS
-  // (decorators, schematics, ts-node em runtime). Quando NestJS suportar
-  // ESM nativo (ETA 2027), unificamos com a base.
-  "extends": "../../tsconfig.base.json",
+  // Standalone (sem extends da base) — NestJS 10 exige CommonJS e a base
+  // usa NodeNext+ESM. Manter as duas configs separadas evita interações
+  // estranhas com `incremental`/`declaration`/`composite` da base que
+  // estavam quebrando o emit de .js pelo nest-cli.
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "Node",
     "lib": ["ES2022"],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "src",
+    "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"]
     },
     "types": ["node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "removeComments": false,
+    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "composite": false,
+    "noEmit": false,
     "preserveWatchOutput": true
   },
-  "include": ["src/**/*", "prisma/seed.ts"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "test/**",
-    "prisma/migrations/**",
+    "prisma/**",
     "**/*.spec.ts"
   ]
 }

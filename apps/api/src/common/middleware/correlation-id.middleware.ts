@@ -10,9 +10,13 @@ import { Injectable, type NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4, validate as isUuid } from 'uuid';
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    correlationId?: string;
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      correlationId?: string;
+      tenantId?: bigint;
+    }
   }
 }
 

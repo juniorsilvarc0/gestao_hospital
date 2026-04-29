@@ -19,7 +19,7 @@ ARG PNPM_VERSION
 ENV PNPM_HOME=/root/.local/share/pnpm \
     PATH=/root/.local/share/pnpm:$PATH \
     CI=true
-RUN apk add --no-cache libc6-compat tini wget \
+RUN apk add --no-cache libc6-compat tini wget openssl \
     && corepack enable \
     && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /app

@@ -73,12 +73,24 @@ export class PrismaService
  * Exportado como função pura para que módulos que precisem de um
  * cliente "cru" (ex.: seed, migrations, audit log) possam optar.
  */
-export function withSoftDelete<T extends PrismaClient>(client: T) {
+type AllOperationsParams = {
+  model?: string;
+  operation: string;
+  args: unknown;
+  query: (args: unknown) => Promise<unknown>;
+};
+
+export function withSoftDelete(client: PrismaClient) {
   return client.$extends({
     name: 'softDeleteFilter',
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
+        async $allOperations({
+          model,
+          operation,
+          args,
+          query,
+        }: AllOperationsParams): Promise<unknown> {
           if (model === undefined || !SOFT_DELETE_MODELS.has(model)) {
             return query(args);
           }
@@ -97,11 +109,11 @@ export function withSoftDelete<T extends PrismaClient>(client: T) {
 
 type WithWhere = { where?: Record<string, unknown> };
 
-function injectDeletedAtFilter<TArgs>(args: TArgs): TArgs {
+function injectDeletedAtFilter(args: unknown): unknown {
   if (typeof args !== 'object' || args === null) {
     return args;
   }
-  const argsWithWhere = args as TArgs & WithWhere;
+  const argsWithWhere = args as WithWhere;
   const existingWhere = argsWithWhere.where ?? {};
   if ('deletedAt' in existingWhere) {
     return args;
@@ -109,5 +121,5 @@ function injectDeletedAtFilter<TArgs>(args: TArgs): TArgs {
   return {
     ...argsWithWhere,
     where: { ...existingWhere, deletedAt: null },
-  } as TArgs;
+  };
 }

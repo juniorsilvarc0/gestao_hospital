@@ -14,21 +14,18 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema", "postgresqlExtensions"]
+  previewFeatures = ["postgresqlExtensions"]
+  // Alpine 3.19+ vem com OpenSSL 3 — sem este binaryTargets explícito o
+  // Prisma tenta `openssl-1.1.x` (não existe na imagem) e falha em runtime.
+  // `native` cobre dev/CI; o pin musl-arm64/x64 garante prod.
+  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-  extensions        = [
-    uuidOssp(map: "uuid-ossp"),
-    pgcrypto,
-    pgTrgm(map: "pg_trgm"),
-    btreeGin(map: "btree_gin"),
-    btreeGist(map: "btree_gist"),
-    unaccent,
-  ]
+  extensions        = [uuidOssp(map: "uuid-ossp"), pgcrypto, pgTrgm(map: "pg_trgm"), btreeGin(map: "btree_gin"), btreeGist(map: "btree_gist"), unaccent]
 }
 
 // ─────────────────────────────────────────────────────────────────────

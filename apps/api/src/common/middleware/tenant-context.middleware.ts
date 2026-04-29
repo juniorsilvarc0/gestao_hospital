@@ -15,12 +15,7 @@
 import { Injectable, type NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    tenantId?: bigint;
-  }
-}
-
+// Augmentação da Request feita em correlation-id.middleware.ts
 const HEADER_TENANT_ID = 'x-tenant-id';
 
 @Injectable()
