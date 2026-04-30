@@ -21,6 +21,7 @@ import { configFactory } from './config/configuration';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { PrismaModule } from './infrastructure/persistence/prisma.module';
+import { QueuesModule } from './infrastructure/queues/queues.module';
 import { SecurityModule } from './common/security.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
@@ -32,8 +33,10 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { PacientesModule } from './modules/pacientes/pacientes.module';
+import { EstruturaFisicaModule } from './modules/estrutura-fisica/estrutura-fisica.module';
 import { PrestadoresModule } from './modules/prestadores/prestadores.module';
 import { ConveniosModule } from './modules/convenios/convenios.module';
+import { CatalogosModule } from './modules/catalogos/catalogos.module';
 import { AgendamentoModule } from './modules/agendamento/agendamento.module';
 import { AtendimentosModule } from './modules/atendimentos/atendimentos.module';
 import { PepModule } from './modules/pep/pep.module';
@@ -48,6 +51,7 @@ import { CcihModule } from './modules/ccih/ccih.module';
 import { SameModule } from './modules/same/same.module';
 import { VisitantesModule } from './modules/visitantes/visitantes.module';
 import { BiModule } from './modules/bi/bi.module';
+import { LgpdModule } from './modules/lgpd/lgpd.module';
 
 @Module({
   imports: [
@@ -99,6 +103,7 @@ import { BiModule } from './modules/bi/bi.module';
       verboseMemoryLeak: process.env.NODE_ENV !== 'production',
     }),
     PrismaModule,
+    QueuesModule,
     SecurityModule,
     HealthModule,
     // Bounded contexts (placeholders Fase 1).
@@ -106,8 +111,10 @@ import { BiModule } from './modules/bi/bi.module';
     UsersModule,
     AuditoriaModule,
     PacientesModule,
+    EstruturaFisicaModule,
     PrestadoresModule,
     ConveniosModule,
+    CatalogosModule,
     AgendamentoModule,
     AtendimentosModule,
     PepModule,
@@ -122,6 +129,7 @@ import { BiModule } from './modules/bi/bi.module';
     SameModule,
     VisitantesModule,
     BiModule,
+    LgpdModule,
   ],
   providers: [
     // Ordem importa: JwtAuthGuard popula request.user; PermissionsGuard

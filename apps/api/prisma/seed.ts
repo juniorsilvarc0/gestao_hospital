@@ -58,6 +58,21 @@ const PERMISSIONS: ReadonlyArray<{
     acao: 'write',
     descricao: 'Cadastrar/editar prestadores',
   },
+  {
+    recurso: 'prestadores',
+    acao: 'delete',
+    descricao: 'Soft-delete de prestadores',
+  },
+  {
+    recurso: 'especialidades',
+    acao: 'read',
+    descricao: 'Consultar catálogo CBOS de especialidades',
+  },
+  {
+    recurso: 'especialidades',
+    acao: 'write',
+    descricao: 'Cadastrar/editar especialidades CBOS (admin)',
+  },
   { recurso: 'convenios', acao: 'read', descricao: 'Consultar convênios' },
   {
     recurso: 'convenios',
@@ -88,6 +103,26 @@ const PERMISSIONS: ReadonlyArray<{
     recurso: 'auditoria',
     acao: 'read',
     descricao: 'Consultar log de auditoria (LGPD)',
+  },
+  {
+    recurso: 'tabelas-procedimentos',
+    acao: 'read',
+    descricao: 'Consultar catálogo TUSS/CBHPM/SUS',
+  },
+  {
+    recurso: 'tabelas-procedimentos',
+    acao: 'write',
+    descricao: 'Editar catálogo e importar TUSS/CBHPM (admin)',
+  },
+  {
+    recurso: 'tabelas-precos',
+    acao: 'read',
+    descricao: 'Consultar tabelas de preços',
+  },
+  {
+    recurso: 'tabelas-precos',
+    acao: 'write',
+    descricao: 'Criar/editar tabelas de preços, itens e vínculos com convênio',
   },
 ];
 

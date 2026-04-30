@@ -30,6 +30,7 @@ model Tenant {
   condicoes_contratuais condicoes_contratuais[]
   convenios             convenios[]
   especialidades        especialidades[]
+  import_jobs           import_jobs[]
   leitos                leitos[]
   mfa_recovery_codes    MfaRecoveryCode[]
   pacientes             pacientes[]
@@ -69,6 +70,7 @@ model Usuario {
   updatedAt          DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?            @map("deleted_at") @db.Timestamptz(6)
   acessos_prontuario acessos_prontuario[]
+  import_jobs        import_jobs[]
   mfaRecoveryCodes   MfaRecoveryCode[]
   sessoesAtivas      SessaoAtiva[]
   usuario_setores    usuario_setores[]
@@ -223,6 +225,7 @@ model centros_custo {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model condicoes_contratuais {
   id                           BigInt    @id @default(autoincrement())
+  uuid_externo                 String    @unique(map: "uq_condicoes_contratuais_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   tenant_id                    BigInt
   convenio_id                  BigInt
   plano_id                     BigInt?
@@ -250,6 +253,7 @@ model condicoes_contratuais {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model convenios {
   id                       BigInt                     @id @default(autoincrement())
+  uuid_externo             String                     @unique(map: "uq_convenios_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   tenant_id                BigInt
   codigo                   String                     @db.VarChar(20)
   nome                     String                     @db.VarChar(300)
@@ -410,6 +414,7 @@ model pacientes_convenios {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model planos {
   id                       BigInt                      @id @default(autoincrement())
+  uuid_externo             String                      @unique(map: "uq_planos_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   tenant_id                BigInt
   convenio_id              BigInt
   codigo                   String                      @db.VarChar(20)
@@ -433,7 +438,7 @@ model planos {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model prestadores {
   id                         BigInt                       @id @default(autoincrement())
-  uuid_externo               String                       @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  uuid_externo               String                       @unique(map: "uq_prestadores_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   tenant_id                  BigInt
   nome                       String                       @db.VarChar(300)
   nome_social                String?                      @db.VarChar(200)
@@ -632,6 +637,57 @@ model usuario_setores {
   @@id([usuario_id, setor_id])
 }
 
+/// LGPD — pedidos de acesso/exclusão/portabilidade/correção (RN-LGP-02..03).
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model solicitacoes_lgpd {
+  id             BigInt                       @id @default(autoincrement())
+  uuid_externo   String                       @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id      BigInt
+  paciente_id    BigInt
+  tipo           enum_lgpd_solicitacao_tipo
+  motivo         String?
+  status         enum_lgpd_solicitacao_status @default(PENDENTE)
+  prazo_sla_dias Int                          @default(15)
+  solicitada_em  DateTime                     @default(now()) @db.Timestamptz(6)
+  solicitante_id BigInt?
+  atendida_em    DateTime?                    @db.Timestamptz(6)
+  atendida_por   BigInt?
+  resposta       String?
+  created_at     DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime?                    @db.Timestamptz(6)
+  deleted_at     DateTime?                    @db.Timestamptz(6)
+
+  @@index([paciente_id, solicitada_em(sort: Desc)], map: "ix_lgpd_paciente")
+  @@index([tenant_id, status, solicitada_em(sort: Desc)], map: "ix_lgpd_status")
+}
+
+/// Jobs assíncronos de importação de catálogos (TUSS/CBHPM/CID-10/CBO).
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model import_jobs {
+  id           BigInt    @id @default(autoincrement())
+  uuid_externo String    @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id    BigInt
+  tipo         String    @db.VarChar(40)
+  arquivo_nome String?   @db.VarChar(300)
+  arquivo_url  String?   @db.VarChar(500)
+  status       String    @default("PENDENTE") @db.VarChar(40)
+  total        Int       @default(0)
+  processados  Int       @default(0)
+  erros        Int       @default(0)
+  error_log    Json?
+  iniciado_em  DateTime? @db.Timestamptz(6)
+  concluido_em DateTime? @db.Timestamptz(6)
+  iniciado_por BigInt?
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  tenants      Tenant    @relation(fields: [tenant_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_import_jobs_tenant_id")
+  usuarios     Usuario?  @relation(fields: [iniciado_por], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_import_jobs_iniciado_por")
+
+  @@unique([uuid_externo], map: "uq_import_jobs_uuid")
+  @@index([tenant_id, status], map: "ix_import_jobs_status")
+  @@index([tenant_id, created_at(sort: Desc)], map: "ix_import_jobs_created_desc")
+}
+
 enum enum_convenio_tipo {
   CONVENIO
   SUS
@@ -725,4 +781,18 @@ enum enum_setor_tipo {
   LABORATORIO
   IMAGEM
   ADMINISTRATIVO
+}
+
+enum enum_lgpd_solicitacao_tipo {
+  ACESSO
+  EXCLUSAO
+  PORTABILIDADE
+  CORRECAO
+}
+
+enum enum_lgpd_solicitacao_status {
+  PENDENTE
+  EM_ANALISE
+  ATENDIDA
+  NEGADA
 }

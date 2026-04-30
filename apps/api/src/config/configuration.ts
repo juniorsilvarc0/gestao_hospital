@@ -65,6 +65,11 @@ export const ConfigSchema = z.object({
 
   // Multi-tenant
   TENANT_DEFAULT: z.string().default('dev'),
+
+  // pgcrypto — chave simétrica usada por `pgp_sym_encrypt` para colunas
+  // sensíveis (CPF). Em produção a chave deve vir de um KMS (RN-LGP-07);
+  // este env é só a fallback dev/CI. Nunca reaproveite as JWT/MFA.
+  PGCRYPTO_KEY: z.string().min(16),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
