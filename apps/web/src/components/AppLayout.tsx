@@ -52,8 +52,8 @@ interface SidebarItem {
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/', label: 'Home', icon: Hospital },
-  { to: '/pacientes', label: 'Pacientes', icon: Users, comingSoon: true },
-  { to: '/agenda', label: 'Agenda', icon: Calendar, comingSoon: true },
+  { to: '/pacientes', label: 'Pacientes', icon: Users },
+  { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/leitos', label: 'Mapa de leitos', icon: Bed, comingSoon: true },
   { to: '/pep', label: 'PEP', icon: Activity, comingSoon: true },
   { to: '/farmacia', label: 'Farmácia', icon: Pill, comingSoon: true },
@@ -338,10 +338,11 @@ function SidebarLink({ item }: { item: SidebarItem }): JSX.Element {
       </div>
     );
   }
+  const isHome = item.to === '/';
   return (
     <NavLink
       to={item.to}
-      end
+      end={isHome}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',

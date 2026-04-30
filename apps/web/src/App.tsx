@@ -16,6 +16,12 @@ import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 import { MfaSetupPage } from '@/pages/MfaSetupPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
+import { PacientesListPage } from '@/pages/pacientes/PacientesListPage';
+import { PacienteFormPage } from '@/pages/pacientes/PacienteFormPage';
+import { PacienteDetailPage } from '@/pages/pacientes/PacienteDetailPage';
+import { AgendaPage } from '@/pages/agenda/AgendaPage';
+import { RecursosPage } from '@/pages/agenda/RecursosPage';
+import { PainelChamadaPage } from '@/pages/PainelChamadaPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -38,6 +44,7 @@ export function App(): JSX.Element {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/painel-chamada" element={<PainelChamadaPage />} />
 
       <Route
         element={
@@ -49,6 +56,18 @@ export function App(): JSX.Element {
         <Route path="/" element={<HomePage />} />
         <Route path="/profile/password" element={<ChangePasswordPage />} />
         <Route path="/auth/mfa-setup" element={<MfaSetupPage />} />
+        <Route path="/pacientes" element={<PacientesListPage />} />
+        <Route
+          path="/pacientes/novo"
+          element={<PacienteFormPage mode="create" />}
+        />
+        <Route path="/pacientes/:uuid" element={<PacienteDetailPage />} />
+        <Route
+          path="/pacientes/:uuid/editar"
+          element={<PacienteFormPage mode="edit" />}
+        />
+        <Route path="/agenda" element={<AgendaPage />} />
+        <Route path="/agenda/recursos" element={<RecursosPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
