@@ -30,8 +30,10 @@ model Tenant {
   agendas_bloqueios       agendas_bloqueios[]
   agendas_disponibilidade agendas_disponibilidade[]
   agendas_recursos        agendas_recursos[]
+  atendimentos            atendimentos[]
   centros_custo           centros_custo[]
   condicoes_contratuais   condicoes_contratuais[]
+  contas                  contas[]
   convenios               convenios[]
   equipamentos            equipamentos[]
   especialidades          especialidades[]
@@ -48,6 +50,7 @@ model Tenant {
   solicitacoes_lgpd       solicitacoes_lgpd[]
   tabelas_precos          tabelas_precos[]
   tabelas_procedimentos   tabelas_procedimentos[]
+  triagens                triagens[]
   unidades_atendimento    unidades_atendimento[]
   unidades_faturamento    unidades_faturamento[]
   usuarios                Usuario[]
@@ -57,37 +60,42 @@ model Tenant {
 }
 
 model Usuario {
-  id                                                BigInt               @id @default(autoincrement())
-  uuidExterno                                       String               @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
-  tenantId                                          BigInt               @map("tenant_id")
-  email                                             String               @db.VarChar(200)
-  senhaHash                                         String?              @map("senha_hash") @db.VarChar(255)
-  mfaSecret                                         String?              @map("mfa_secret") @db.VarChar(255)
-  mfaHabilitado                                     Boolean              @default(false) @map("mfa_habilitado")
-  prestadorId                                       BigInt?              @map("prestador_id")
-  nome                                              String               @db.VarChar(300)
-  ativo                                             Boolean              @default(true)
-  ultimoLoginEm                                     DateTime?            @map("ultimo_login_em") @db.Timestamptz(6)
-  ultimoLoginIp                                     String?              @map("ultimo_login_ip") @db.Inet
-  tentativasLogin                                   Int                  @default(0) @map("tentativas_login")
-  bloqueadoAte                                      DateTime?            @map("bloqueado_ate") @db.Timestamptz(6)
-  precisaTrocarSenha                                Boolean              @default(true) @map("precisa_trocar_senha")
-  createdAt                                         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                                         DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                                         DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  acessos_prontuario                                acessos_prontuario[]
-  agendamentos_agendamentos_cancelado_porTousuarios agendamentos[]       @relation("agendamentos_cancelado_porTousuarios")
-  agendamentos_agendamentos_checkin_porTousuarios   agendamentos[]       @relation("agendamentos_checkin_porTousuarios")
-  agendamentos_agendamentos_created_byTousuarios    agendamentos[]       @relation("agendamentos_created_byTousuarios")
-  agendamentos_agendamentos_updated_byTousuarios    agendamentos[]       @relation("agendamentos_updated_byTousuarios")
-  agendas_bloqueios                                 agendas_bloqueios[]
-  import_jobs                                       import_jobs[]
-  mfaRecoveryCodes                                  MfaRecoveryCode[]
-  sessoesAtivas                                     SessaoAtiva[]
-  usuario_setores                                   usuario_setores[]
-  prestadores                                       prestadores?         @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
-  tenant                                            Tenant               @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
-  perfis                                            UsuarioPerfil[]
+  id                                                          BigInt               @id @default(autoincrement())
+  uuidExterno                                                 String               @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
+  tenantId                                                    BigInt               @map("tenant_id")
+  email                                                       String               @db.VarChar(200)
+  senhaHash                                                   String?              @map("senha_hash") @db.VarChar(255)
+  mfaSecret                                                   String?              @map("mfa_secret") @db.VarChar(255)
+  mfaHabilitado                                               Boolean              @default(false) @map("mfa_habilitado")
+  prestadorId                                                 BigInt?              @map("prestador_id")
+  nome                                                        String               @db.VarChar(300)
+  ativo                                                       Boolean              @default(true)
+  ultimoLoginEm                                               DateTime?            @map("ultimo_login_em") @db.Timestamptz(6)
+  ultimoLoginIp                                               String?              @map("ultimo_login_ip") @db.Inet
+  tentativasLogin                                             Int                  @default(0) @map("tentativas_login")
+  bloqueadoAte                                                DateTime?            @map("bloqueado_ate") @db.Timestamptz(6)
+  precisaTrocarSenha                                          Boolean              @default(true) @map("precisa_trocar_senha")
+  createdAt                                                   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                                                   DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                                                   DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  acessos_prontuario                                          acessos_prontuario[]
+  agendamentos_agendamentos_cancelado_porTousuarios           agendamentos[]       @relation("agendamentos_cancelado_porTousuarios")
+  agendamentos_agendamentos_checkin_porTousuarios             agendamentos[]       @relation("agendamentos_checkin_porTousuarios")
+  agendamentos_agendamentos_created_byTousuarios              agendamentos[]       @relation("agendamentos_created_byTousuarios")
+  agendamentos_agendamentos_updated_byTousuarios              agendamentos[]       @relation("agendamentos_updated_byTousuarios")
+  agendas_bloqueios                                           agendas_bloqueios[]
+  atendimentos_atendimentos_classificacao_risco_porTousuarios atendimentos[]       @relation("atendimentos_classificacao_risco_porTousuarios")
+  atendimentos_atendimentos_created_byTousuarios              atendimentos[]       @relation("atendimentos_created_byTousuarios")
+  atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]       @relation("atendimentos_deleted_byTousuarios")
+  atendimentos_atendimentos_updated_byTousuarios              atendimentos[]       @relation("atendimentos_updated_byTousuarios")
+  import_jobs                                                 import_jobs[]
+  mfaRecoveryCodes                                            MfaRecoveryCode[]
+  sessoesAtivas                                               SessaoAtiva[]
+  triagens                                                    triagens[]
+  usuario_setores                                             usuario_setores[]
+  prestadores                                                 prestadores?         @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
+  tenant                                                      Tenant               @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
+  perfis                                                      UsuarioPerfil[]
 
   @@unique([tenantId, email], map: "uq_usuarios_email_tenant")
   @@index([tenantId], map: "ix_usuarios_tenant")
@@ -173,18 +181,19 @@ model MfaRecoveryCode {
 /// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model acessos_prontuario {
-  id             BigInt    @default(autoincrement())
+  id             BigInt        @default(autoincrement())
   tenant_id      BigInt
   paciente_id    BigInt
   atendimento_id BigInt?
   usuario_id     BigInt
-  perfil         String    @db.VarChar(50)
-  finalidade     String    @db.VarChar(200)
-  modulo         String    @db.VarChar(50)
-  ip             String?   @db.Inet
-  acessado_em    DateTime  @default(now()) @db.Timestamptz(6)
-  pacientes      pacientes @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
-  usuarios       Usuario   @relation(fields: [usuario_id], references: [id], onUpdate: NoAction)
+  perfil         String        @db.VarChar(50)
+  finalidade     String        @db.VarChar(200)
+  modulo         String        @db.VarChar(50)
+  ip             String?       @db.Inet
+  acessado_em    DateTime      @default(now()) @db.Timestamptz(6)
+  pacientes      pacientes     @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  usuarios       Usuario       @relation(fields: [usuario_id], references: [id], onUpdate: NoAction)
+  atendimentos   atendimentos? @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction, map: "fk_acessos_atendimento_id")
 
   @@id([id, acessado_em])
   @@index([paciente_id, acessado_em(sort: Desc)], map: "ix_acesso_paciente")
@@ -280,7 +289,9 @@ model convenios {
   deleted_at               DateTime?                  @db.Timestamptz(6)
   uuid_externo             String                     @unique(map: "uq_convenios_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendamentos             agendamentos[]
+  atendimentos             atendimentos[]
   condicoes_contratuais    condicoes_contratuais[]
+  contas                   contas[]
   tenants                  Tenant                     @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   convenios_tabelas_precos convenios_tabelas_precos[]
   pacientes_convenios      pacientes_convenios[]
@@ -319,25 +330,28 @@ model especialidades {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model leitos {
-  id                    BigInt                     @id @default(autoincrement())
-  tenant_id             BigInt
-  setor_id              BigInt
-  codigo                String                     @db.VarChar(20)
-  tipo_acomodacao       enum_leito_tipo_acomodacao
-  status                enum_leito_status          @default(DISPONIVEL)
-  paciente_id           BigInt?
-  atendimento_id        BigInt?
-  ocupacao_iniciada_em  DateTime?                  @db.Timestamptz(6)
-  ocupacao_prevista_fim DateTime?                  @db.Timestamptz(6)
-  extra                 Boolean                    @default(false)
-  observacao            String?                    @db.VarChar(500)
-  versao                Int                        @default(1)
-  ativo                 Boolean                    @default(true)
-  created_at            DateTime                   @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime?                  @db.Timestamptz(6)
-  deleted_at            DateTime?                  @db.Timestamptz(6)
-  setores               setores                    @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
-  tenants               Tenant                     @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id                                               BigInt                     @id @default(autoincrement())
+  tenant_id                                        BigInt
+  setor_id                                         BigInt
+  codigo                                           String                     @db.VarChar(20)
+  tipo_acomodacao                                  enum_leito_tipo_acomodacao
+  status                                           enum_leito_status          @default(DISPONIVEL)
+  paciente_id                                      BigInt?
+  atendimento_id                                   BigInt?
+  ocupacao_iniciada_em                             DateTime?                  @db.Timestamptz(6)
+  ocupacao_prevista_fim                            DateTime?                  @db.Timestamptz(6)
+  extra                                            Boolean                    @default(false)
+  observacao                                       String?                    @db.VarChar(500)
+  versao                                           Int                        @default(1)
+  ativo                                            Boolean                    @default(true)
+  created_at                                       DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                       DateTime?                  @db.Timestamptz(6)
+  deleted_at                                       DateTime?                  @db.Timestamptz(6)
+  atendimentos_atendimentos_leito_idToleitos       atendimentos[]             @relation("atendimentos_leito_idToleitos")
+  atendimentos_leitos_atendimento_idToatendimentos atendimentos?              @relation("leitos_atendimento_idToatendimentos", fields: [atendimento_id], references: [id], onUpdate: NoAction, map: "fk_leitos_atendimento_id")
+  pacientes                                        pacientes?                 @relation(fields: [paciente_id], references: [id], onUpdate: NoAction, map: "fk_leitos_paciente_id")
+  setores                                          setores                    @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+  tenants                                          Tenant                     @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, setor_id, codigo], map: "uq_leitos_codigo")
   @@index([setor_id, status], map: "ix_leitos_setor_status")
@@ -389,6 +403,9 @@ model pacientes {
   versao                  Int                                    @default(1)
   acessos_prontuario      acessos_prontuario[]
   agendamentos            agendamentos[]
+  atendimentos            atendimentos[]
+  contas                  contas[]
+  leitos                  leitos[]
   pacientes               pacientes?                             @relation("pacientesTopacientes", fields: [paciente_mae_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   other_pacientes         pacientes[]                            @relation("pacientesTopacientes")
   tenants                 Tenant                                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -403,25 +420,26 @@ model pacientes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model pacientes_convenios {
-  id                 BigInt    @id @default(autoincrement())
+  id                 BigInt         @id @default(autoincrement())
   tenant_id          BigInt
   paciente_id        BigInt
   convenio_id        BigInt
   plano_id           BigInt?
-  numero_carteirinha String    @db.VarChar(40)
-  validade           DateTime? @db.Date
-  titular            Boolean   @default(true)
-  parentesco_titular String?   @db.VarChar(40)
-  prioridade         Int       @default(1)
-  ativo              Boolean   @default(true)
-  created_at         DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime? @db.Timestamptz(6)
-  deleted_at         DateTime? @db.Timestamptz(6)
-  uuid_externo       String    @unique(map: "uq_pac_conv_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  convenios          convenios @relation(fields: [convenio_id], references: [id], onUpdate: NoAction)
-  pacientes          pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  planos             planos?   @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  tenants            Tenant    @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  numero_carteirinha String         @db.VarChar(40)
+  validade           DateTime?      @db.Date
+  titular            Boolean        @default(true)
+  parentesco_titular String?        @db.VarChar(40)
+  prioridade         Int            @default(1)
+  ativo              Boolean        @default(true)
+  created_at         DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?      @db.Timestamptz(6)
+  deleted_at         DateTime?      @db.Timestamptz(6)
+  uuid_externo       String         @unique(map: "uq_pac_conv_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  atendimentos       atendimentos[]
+  convenios          convenios      @relation(fields: [convenio_id], references: [id], onUpdate: NoAction)
+  pacientes          pacientes      @relation(fields: [paciente_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planos             planos?        @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tenants            Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, convenio_id, numero_carteirinha], map: "uq_pac_conv_carteirinha")
 }
@@ -442,7 +460,9 @@ model planos {
   deleted_at               DateTime?                   @db.Timestamptz(6)
   uuid_externo             String                      @unique(map: "uq_planos_uuid_externo") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendamentos             agendamentos[]
+  atendimentos             atendimentos[]
   condicoes_contratuais    condicoes_contratuais[]
+  contas                   contas[]
   convenios_tabelas_precos convenios_tabelas_precos[]
   pacientes_convenios      pacientes_convenios[]
   convenios                convenios                   @relation(fields: [convenio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -478,6 +498,7 @@ model prestadores {
   updated_at                 DateTime?                    @db.Timestamptz(6)
   deleted_at                 DateTime?                    @db.Timestamptz(6)
   agendas_recursos           agendas_recursos[]
+  atendimentos               atendimentos[]
   tenants                    Tenant                       @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   prestadores_especialidades prestadores_especialidades[]
   usuarios                   Usuario[]
@@ -531,6 +552,7 @@ model setores {
   created_at             DateTime             @default(now()) @db.Timestamptz(6)
   updated_at             DateTime?            @db.Timestamptz(6)
   deleted_at             DateTime?            @db.Timestamptz(6)
+  atendimentos           atendimentos[]
   equipamentos           equipamentos[]
   leitos                 leitos[]
   salas_cirurgicas       salas_cirurgicas[]
@@ -619,33 +641,35 @@ model tabelas_procedimentos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model unidades_atendimento {
-  id         BigInt    @id @default(autoincrement())
-  tenant_id  BigInt
-  codigo     String    @db.VarChar(20)
-  nome       String    @db.VarChar(120)
-  ativa      Boolean   @default(true)
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at DateTime? @db.Timestamptz(6)
-  deleted_at DateTime? @db.Timestamptz(6)
-  setores    setores[]
-  tenants    Tenant    @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id           BigInt         @id @default(autoincrement())
+  tenant_id    BigInt
+  codigo       String         @db.VarChar(20)
+  nome         String         @db.VarChar(120)
+  ativa        Boolean        @default(true)
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?      @db.Timestamptz(6)
+  deleted_at   DateTime?      @db.Timestamptz(6)
+  atendimentos atendimentos[]
+  setores      setores[]
+  tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo], map: "uq_ua")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model unidades_faturamento {
-  id         BigInt    @id @default(autoincrement())
-  tenant_id  BigInt
-  codigo     String    @db.VarChar(20)
-  nome       String    @db.VarChar(120)
-  cnes       String?   @db.VarChar(20)
-  ativa      Boolean   @default(true)
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at DateTime? @db.Timestamptz(6)
-  deleted_at DateTime? @db.Timestamptz(6)
-  setores    setores[]
-  tenants    Tenant    @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id           BigInt         @id @default(autoincrement())
+  tenant_id    BigInt
+  codigo       String         @db.VarChar(20)
+  nome         String         @db.VarChar(120)
+  cnes         String?        @db.VarChar(20)
+  ativa        Boolean        @default(true)
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?      @db.Timestamptz(6)
+  deleted_at   DateTime?      @db.Timestamptz(6)
+  atendimentos atendimentos[]
+  setores      setores[]
+  tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo], map: "uq_uf")
 }
@@ -757,6 +781,7 @@ model agendamentos {
   agendas_recursos                              agendas_recursos        @relation(fields: [recurso_id], references: [id], onUpdate: NoAction)
   tenants                                       Tenant                  @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   usuarios_agendamentos_updated_byTousuarios    Usuario?                @relation("agendamentos_updated_byTousuarios", fields: [updated_by], references: [id], onUpdate: NoAction)
+  atendimentos                                  atendimentos[]
 
   @@index([paciente_id, inicio(sort: Desc)], map: "ix_agend_paciente")
   @@index([recurso_id, inicio], map: "ix_agend_recurso_inicio")
@@ -847,6 +872,140 @@ model equipamentos {
   tenants          Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo], map: "uq_equipamentos")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model atendimentos {
+  id                                                      BigInt                                @id @default(autoincrement())
+  uuid_externo                                            String                                @unique(map: "uq_atendimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                               BigInt
+  numero_atendimento                                      String                                @db.VarChar(30)
+  paciente_id                                             BigInt
+  tipo                                                    enum_atendimento_tipo
+  data_hora_entrada                                       DateTime                              @default(now()) @db.Timestamptz(6)
+  data_hora_saida                                         DateTime?                             @db.Timestamptz(6)
+  prestador_id                                            BigInt
+  setor_id                                                BigInt
+  unidade_faturamento_id                                  BigInt
+  unidade_atendimento_id                                  BigInt
+  leito_id                                                BigInt?
+  tipo_cobranca                                           enum_tipo_cobranca
+  paciente_convenio_id                                    BigInt?
+  convenio_id                                             BigInt?
+  plano_id                                                BigInt?
+  numero_carteirinha                                      String?                               @db.VarChar(40)
+  numero_guia_operadora                                   String?                               @db.VarChar(40)
+  senha_autorizacao                                       String?                               @db.VarChar(40)
+  classificacao_risco                                     enum_atendimento_classificacao_risco?
+  classificacao_risco_em                                  DateTime?                             @db.Timestamptz(6)
+  classificacao_risco_por                                 BigInt?
+  cid_principal                                           String?                               @db.VarChar(10)
+  cids_secundarios                                        Json?
+  motivo_atendimento                                      String?                               @db.VarChar(500)
+  tipo_alta                                               enum_atendimento_tipo_alta?
+  status                                                  enum_atendimento_status               @default(EM_ESPERA)
+  conta_id                                                BigInt?
+  agendamento_id                                          BigInt?
+  atendimento_origem_id                                   BigInt?
+  observacao                                              String?
+  created_at                                              DateTime                              @default(now()) @db.Timestamptz(6)
+  created_by                                              BigInt?
+  updated_at                                              DateTime?                             @db.Timestamptz(6)
+  updated_by                                              BigInt?
+  deleted_at                                              DateTime?                             @db.Timestamptz(6)
+  deleted_by                                              BigInt?
+  versao                                                  Int                                   @default(1)
+  acessos_prontuario                                      acessos_prontuario[]
+  agendamentos                                            agendamentos?                         @relation(fields: [agendamento_id], references: [id], onUpdate: NoAction)
+  atendimentos                                            atendimentos?                         @relation("atendimentosToatendimentos", fields: [atendimento_origem_id], references: [id], onUpdate: NoAction)
+  other_atendimentos                                      atendimentos[]                        @relation("atendimentosToatendimentos")
+  usuarios_atendimentos_classificacao_risco_porTousuarios Usuario?                              @relation("atendimentos_classificacao_risco_porTousuarios", fields: [classificacao_risco_por], references: [id], onUpdate: NoAction)
+  convenios                                               convenios?                            @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  usuarios_atendimentos_created_byTousuarios              Usuario?                              @relation("atendimentos_created_byTousuarios", fields: [created_by], references: [id], onUpdate: NoAction)
+  usuarios_atendimentos_deleted_byTousuarios              Usuario?                              @relation("atendimentos_deleted_byTousuarios", fields: [deleted_by], references: [id], onUpdate: NoAction)
+  leitos_atendimentos_leito_idToleitos                    leitos?                               @relation("atendimentos_leito_idToleitos", fields: [leito_id], references: [id], onUpdate: NoAction)
+  pacientes_convenios                                     pacientes_convenios?                  @relation(fields: [paciente_convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pacientes                                               pacientes                             @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  planos                                                  planos?                               @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  prestadores                                             prestadores                           @relation(fields: [prestador_id], references: [id], onUpdate: NoAction)
+  setores                                                 setores                               @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+  tenants                                                 Tenant                                @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  unidades_atendimento                                    unidades_atendimento                  @relation(fields: [unidade_atendimento_id], references: [id], onUpdate: NoAction)
+  unidades_faturamento                                    unidades_faturamento                  @relation(fields: [unidade_faturamento_id], references: [id], onUpdate: NoAction)
+  usuarios_atendimentos_updated_byTousuarios              Usuario?                              @relation("atendimentos_updated_byTousuarios", fields: [updated_by], references: [id], onUpdate: NoAction)
+  contas                                                  contas?
+  leitos_leitos_atendimento_idToatendimentos              leitos[]                              @relation("leitos_atendimento_idToatendimentos")
+  triagens                                                triagens[]
+
+  @@unique([tenant_id, numero_atendimento], map: "uq_atendimentos_numero")
+  @@index([prestador_id, data_hora_entrada(sort: Desc)], map: "ix_atend_prestador")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model contas {
+  id                      BigInt             @id @default(autoincrement())
+  uuid_externo            String             @unique(map: "uq_contas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id               BigInt
+  numero_conta            String             @db.VarChar(30)
+  atendimento_id          BigInt             @unique(map: "uq_contas_atend")
+  paciente_id             BigInt
+  convenio_id             BigInt?
+  plano_id                BigInt?
+  tipo_cobranca           enum_tipo_cobranca
+  data_abertura           DateTime           @default(now()) @db.Timestamptz(6)
+  data_fechamento         DateTime?          @db.Timestamptz(6)
+  data_envio              DateTime?          @db.Timestamptz(6)
+  valor_total             Decimal            @default(0) @db.Decimal(18, 4)
+  valor_glosa             Decimal            @default(0) @db.Decimal(18, 4)
+  valor_recurso_revertido Decimal            @default(0) @db.Decimal(18, 4)
+  valor_pago              Decimal            @default(0) @db.Decimal(18, 4)
+  valor_liquido           Decimal            @default(0) @db.Decimal(18, 4)
+  status                  enum_conta_status  @default(ABERTA)
+  observacao_elaboracao   String?
+  created_at              DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime?          @db.Timestamptz(6)
+  deleted_at              DateTime?          @db.Timestamptz(6)
+  versao                  Int                @default(1)
+  atendimentos            atendimentos       @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  convenios               convenios?         @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pacientes               pacientes          @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  planos                  planos?            @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tenants                 Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+
+  @@unique([tenant_id, numero_conta], map: "uq_contas_numero")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model triagens {
+  id               BigInt                               @id @default(autoincrement())
+  uuid_externo     String                               @unique(map: "uq_triagens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id        BigInt
+  atendimento_id   BigInt
+  classificacao    enum_atendimento_classificacao_risco
+  protocolo        String                               @default("MANCHESTER") @db.VarChar(40)
+  queixa_principal String
+  pa_sistolica     Int?
+  pa_diastolica    Int?
+  fc               Int?
+  fr               Int?
+  temperatura      Decimal?                             @db.Decimal(4, 1)
+  sat_o2           Int?
+  glicemia         Int?
+  peso_kg          Decimal?                             @db.Decimal(5, 2)
+  altura_cm        Int?
+  dor_eva          Int?                                 @db.SmallInt
+  observacao       String?
+  triagem_em       DateTime                             @default(now()) @db.Timestamptz(6)
+  triagem_por      BigInt
+  created_at       DateTime                             @default(now()) @db.Timestamptz(6)
+  atendimentos     atendimentos                         @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  tenants          Tenant                               @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  usuarios         Usuario                              @relation(fields: [triagem_por], references: [id], onUpdate: NoAction)
+
+  @@index([atendimento_id, triagem_em(sort: Desc)], map: "ix_triagens_atendimento")
 }
 
 enum enum_convenio_tipo {
@@ -989,4 +1148,48 @@ enum enum_atendimento_tipo {
   PRONTO_ATENDIMENTO
   TELECONSULTA
   OBSERVACAO
+}
+
+enum enum_atendimento_classificacao_risco {
+  VERMELHO
+  LARANJA
+  AMARELO
+  VERDE
+  AZUL
+}
+
+enum enum_atendimento_status {
+  AGENDADO
+  EM_ESPERA
+  EM_TRIAGEM
+  EM_ATENDIMENTO
+  INTERNADO
+  ALTA
+  CANCELADO
+  NAO_COMPARECEU
+}
+
+enum enum_atendimento_tipo_alta {
+  ALTA_MEDICA
+  ALTA_PEDIDO
+  TRANSFERENCIA
+  EVASAO
+  OBITO
+}
+
+enum enum_conta_status {
+  ABERTA
+  EM_ELABORACAO
+  FECHADA
+  FATURADA
+  GLOSADA_PARCIAL
+  GLOSADA_TOTAL
+  PAGA
+  CANCELADA
+}
+
+enum enum_tipo_cobranca {
+  PARTICULAR
+  CONVENIO
+  SUS
 }
