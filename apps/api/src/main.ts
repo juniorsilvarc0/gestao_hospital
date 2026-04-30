@@ -21,6 +21,7 @@ import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { HttpExceptionToProblemDetails } from './common/filters/http-exception.filter';
 import { loadConfig } from './config/configuration';
+import { SocketIoRedisAdapter } from './modules/painel-chamada/socket-io-redis.adapter';
 
 async function bootstrap(): Promise<void> {
   // Falha cedo se .env estiver inválido.
@@ -72,6 +73,13 @@ async function bootstrap(): Promise<void> {
   );
 
   app.useGlobalFilters(new HttpExceptionToProblemDetails());
+
+  // Socket.IO + Redis Adapter (Fase 4 — Trilha B): permite escala
+  // horizontal de gateways (`/painel-chamada` e os que vierem em fases
+  // seguintes — mapa de leitos, painel de farmácia).
+  const ioAdapter = new SocketIoRedisAdapter(app);
+  await ioAdapter.connectToRedis();
+  app.useWebSocketAdapter(ioAdapter);
 
   // Swagger / OpenAPI
   const swaggerConfig = new DocumentBuilder()

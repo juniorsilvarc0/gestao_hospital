@@ -38,6 +38,7 @@ import { PrestadoresModule } from './modules/prestadores/prestadores.module';
 import { ConveniosModule } from './modules/convenios/convenios.module';
 import { CatalogosModule } from './modules/catalogos/catalogos.module';
 import { AgendamentoModule } from './modules/agendamento/agendamento.module';
+import { PainelChamadaModule } from './modules/painel-chamada/painel-chamada.module';
 import { AtendimentosModule } from './modules/atendimentos/atendimentos.module';
 import { PepModule } from './modules/pep/pep.module';
 import { PrescricoesModule } from './modules/prescricoes/prescricoes.module';
@@ -116,6 +117,7 @@ import { LgpdModule } from './modules/lgpd/lgpd.module';
     ConveniosModule,
     CatalogosModule,
     AgendamentoModule,
+    PainelChamadaModule,
     AtendimentosModule,
     PepModule,
     PrescricoesModule,

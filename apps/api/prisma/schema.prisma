@@ -509,6 +509,7 @@ model salas_cirurgicas {
   created_at       DateTime           @default(now()) @db.Timestamptz(6)
   updated_at       DateTime?          @db.Timestamptz(6)
   deleted_at       DateTime?          @db.Timestamptz(6)
+  uuid_externo     String             @unique(map: "uq_salas_cirurgicas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendas_recursos agendas_recursos[]
   setores          setores            @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
   tenants          Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -608,6 +609,7 @@ model tabelas_procedimentos {
   ativo                Boolean                @default(true)
   created_at           DateTime               @default(now()) @db.Timestamptz(6)
   updated_at           DateTime?              @db.Timestamptz(6)
+  uuid_externo         String                 @unique(map: "uq_tabelas_procedimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendamentos         agendamentos[]
   tabelas_precos_itens tabelas_precos_itens[]
   tenants              Tenant                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
