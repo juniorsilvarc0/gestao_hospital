@@ -73,6 +73,7 @@ export class PermissionsGuard implements CanActivate {
 
     const allowed = await this.hasPermission(
       user.sub,
+      user.tid,
       required.recurso,
       required.acao,
     );
@@ -99,6 +100,7 @@ export class PermissionsGuard implements CanActivate {
 
   private async hasPermission(
     usuarioId: bigint,
+    tenantId: bigint,
     recurso: string,
     acao: string,
   ): Promise<boolean> {
@@ -107,25 +109,36 @@ export class PermissionsGuard implements CanActivate {
       return cached;
     }
 
-    // Resolve perfis_permissoes do usuário. RLS via tx() já restringe
-    // perfis ao tenant correto. `permissoes` é catálogo global.
-    const tx = this.prisma.tx();
-    const found = await tx.usuarioPerfil.findFirst({
-      where: {
-        usuarioId,
-        perfil: {
-          ativo: true,
-          permissoes: {
-            some: {
-              permissao: { recurso, acao },
+    // O guard roda ANTES do TenantContextInterceptor (ordem do Nest:
+    // guards → interceptors). Sem SET LOCAL, RLS em `perfis` filtra tudo
+    // → 0 resultados. Aqui abrimos uma transação curta apenas para
+    // setar o tenant a partir do JWT (já validado em JwtAuthGuard) e
+    // executar a checagem.
+    if (!/^\d+$/.test(tenantId.toString())) {
+      throw new ForbiddenException({
+        code: 'AUTH_INVALID_TENANT',
+        message: 'Tenant inválido no token.',
+      });
+    }
+    const allow = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SET LOCAL app.current_tenant_id = '${tenantId.toString()}'`,
+      );
+      const found = await tx.usuarioPerfil.findFirst({
+        where: {
+          usuarioId,
+          perfil: {
+            ativo: true,
+            permissoes: {
+              some: { permissao: { recurso, acao } },
             },
           },
         },
-      },
-      select: { perfilId: true },
+        select: { perfilId: true },
+      });
+      return found !== null;
     });
 
-    const allow = found !== null;
     await this.cache.set(usuarioId, recurso, acao, allow);
     return allow;
   }
