@@ -1,0 +1,11 @@
+codigo;nome;tipo;grupo_gasto;tabela_tiss;unidade_medida;valor_referencia
+10101012;Consulta em consultório (no horário normal ou preestabelecido);PROCEDIMENTO;PROCEDIMENTO;22;UN;150.00
+10103015;Consulta em pronto socorro;PROCEDIMENTO;PROCEDIMENTO;22;UN;180.00
+20101014;Drenagem de abscesso superficial;PROCEDIMENTO;PROCEDIMENTO;22;UN;220.00
+30101034;Hemograma completo;PROCEDIMENTO;PROCEDIMENTO;22;UN;25.50
+40901157;Radiografia simples - tórax PA + perfil;PROCEDIMENTO;PROCEDIMENTO;22;UN;75.00
+40802017;Eletrocardiograma convencional de até 12 derivações;PROCEDIMENTO;PROCEDIMENTO;22;UN;45.00
+50000020;Diária de internação - apartamento;DIARIA;DIARIA;22;DIA;850.00
+60000119;Diária de UTI adulto;DIARIA;DIARIA;22;DIA;1850.00
+70000064;Taxa de sala cirúrgica - pequeno porte;TAXA;TAXA;22;UN;320.00
+90000054;Curativo simples;SERVICO;SERVICO;22;UN;30.00
