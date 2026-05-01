@@ -88,6 +88,7 @@ model Usuario {
   atendimentos_atendimentos_created_byTousuarios              atendimentos[]       @relation("atendimentos_created_byTousuarios")
   atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]       @relation("atendimentos_deleted_byTousuarios")
   atendimentos_atendimentos_updated_byTousuarios              atendimentos[]       @relation("atendimentos_updated_byTousuarios")
+  glosas                                                      glosas[]
   import_jobs                                                 import_jobs[]
   mfaRecoveryCodes                                            MfaRecoveryCode[]
   sessoesAtivas                                               SessaoAtiva[]
@@ -295,7 +296,10 @@ model convenios {
   contas                   contas[]
   tenants                  Tenant                     @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   convenios_tabelas_precos convenios_tabelas_precos[]
+  glosas                   glosas[]
+  lotes_tiss               lotes_tiss[]
   pacientes_convenios      pacientes_convenios[]
+  pacotes                  pacotes[]
   planos                   planos[]
 
   @@unique([tenant_id, cnpj], map: "uq_convenios_cnpj")
@@ -662,6 +666,8 @@ model tabelas_procedimentos {
   dispensacoes_itens           dispensacoes_itens[]
   kits_cirurgicos_itens        kits_cirurgicos_itens[]
   livro_controlados            livro_controlados[]
+  pacotes                      pacotes[]
+  pacotes_itens                pacotes_itens[]
   prescricoes_itens            prescricoes_itens[]
   procedimento_principio_ativo procedimento_principio_ativo[]
   solicitacoes_exame_itens     solicitacoes_exame_itens[]
@@ -983,36 +989,58 @@ model atendimentos {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model contas {
-  id                      BigInt             @id @default(autoincrement())
-  uuid_externo            String             @unique(map: "uq_contas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  tenant_id               BigInt
-  numero_conta            String             @db.VarChar(30)
-  atendimento_id          BigInt             @unique(map: "uq_contas_atend")
-  paciente_id             BigInt
-  convenio_id             BigInt?
-  plano_id                BigInt?
-  tipo_cobranca           enum_tipo_cobranca
-  data_abertura           DateTime           @default(now()) @db.Timestamptz(6)
-  data_fechamento         DateTime?          @db.Timestamptz(6)
-  data_envio              DateTime?          @db.Timestamptz(6)
-  valor_total             Decimal            @default(0) @db.Decimal(18, 4)
-  valor_glosa             Decimal            @default(0) @db.Decimal(18, 4)
-  valor_recurso_revertido Decimal            @default(0) @db.Decimal(18, 4)
-  valor_pago              Decimal            @default(0) @db.Decimal(18, 4)
-  valor_liquido           Decimal            @default(0) @db.Decimal(18, 4)
-  status                  enum_conta_status  @default(ABERTA)
-  observacao_elaboracao   String?
-  created_at              DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime?          @db.Timestamptz(6)
-  deleted_at              DateTime?          @db.Timestamptz(6)
-  versao                  Int                @default(1)
-  cirurgias               cirurgias[]
-  atendimentos            atendimentos       @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
-  convenios               convenios?         @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  pacientes               pacientes          @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
-  planos                  planos?            @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  tenants                 Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
-  contas_itens            contas_itens[]
+  id                       BigInt             @id @default(autoincrement())
+  uuid_externo             String             @unique(map: "uq_contas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                BigInt
+  numero_conta             String             @db.VarChar(30)
+  atendimento_id           BigInt             @unique(map: "uq_contas_atend")
+  paciente_id              BigInt
+  convenio_id              BigInt?
+  plano_id                 BigInt?
+  tipo_cobranca            enum_tipo_cobranca
+  data_abertura            DateTime           @default(now()) @db.Timestamptz(6)
+  data_fechamento          DateTime?          @db.Timestamptz(6)
+  data_envio               DateTime?          @db.Timestamptz(6)
+  valor_total              Decimal            @default(0) @db.Decimal(18, 4)
+  valor_glosa              Decimal            @default(0) @db.Decimal(18, 4)
+  valor_recurso_revertido  Decimal            @default(0) @db.Decimal(18, 4)
+  valor_pago               Decimal            @default(0) @db.Decimal(18, 4)
+  valor_liquido            Decimal            @default(0) @db.Decimal(18, 4)
+  status                   enum_conta_status  @default(ABERTA)
+  observacao_elaboracao    String?
+  created_at               DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?          @db.Timestamptz(6)
+  deleted_at               DateTime?          @db.Timestamptz(6)
+  versao                   Int                @default(1)
+  versao_tiss_snapshot     String?            @db.VarChar(10)
+  condicao_contratual_snap Json?
+  tabela_precos_snap       Json?
+  valor_procedimentos      Decimal            @default(0) @db.Decimal(18, 4)
+  valor_diarias            Decimal            @default(0) @db.Decimal(18, 4)
+  valor_taxas              Decimal            @default(0) @db.Decimal(18, 4)
+  valor_servicos           Decimal            @default(0) @db.Decimal(18, 4)
+  valor_materiais          Decimal            @default(0) @db.Decimal(18, 4)
+  valor_medicamentos       Decimal            @default(0) @db.Decimal(18, 4)
+  valor_opme               Decimal            @default(0) @db.Decimal(18, 4)
+  valor_gases              Decimal            @default(0) @db.Decimal(18, 4)
+  valor_pacotes            Decimal            @default(0) @db.Decimal(18, 4)
+  valor_honorarios         Decimal            @default(0) @db.Decimal(18, 4)
+  iss_aliquota_snap        Decimal?           @db.Decimal(7, 4)
+  iss_valor                Decimal?           @db.Decimal(18, 4)
+  iss_retem                Boolean            @default(false)
+  numero_guia_principal    String?            @db.VarChar(30)
+  data_elaboracao_inicio   DateTime?          @db.Timestamptz(6)
+  data_elaboracao_fim      DateTime?          @db.Timestamptz(6)
+  inconsistencias          Json?
+  cirurgias                cirurgias[]
+  atendimentos             atendimentos       @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  convenios                convenios?         @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pacientes                pacientes          @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  planos                   planos?            @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tenants                  Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  contas_itens             contas_itens[]
+  glosas                   glosas[]
+  guias_tiss               guias_tiss[]
 
   @@unique([tenant_id, numero_conta], map: "uq_contas_numero")
 }
@@ -1476,6 +1504,9 @@ model contas_itens {
   prestadores             prestadores?           @relation(fields: [prestador_executante_id], references: [id], onUpdate: NoAction)
   tabelas_procedimentos   tabelas_procedimentos  @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
   setores                 setores?               @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+  guias_tiss              guias_tiss?            @relation(fields: [guia_tiss_id], references: [id], onUpdate: NoAction, map: "fk_contas_itens_guia_tiss")
+  pacotes                 pacotes?               @relation(fields: [pacote_id], references: [id], onUpdate: NoAction, map: "fk_contas_itens_pacote")
+  glosas                  glosas[]
 
   @@index([origem, origem_referencia_id], map: "ix_ci_origem")
   @@index([procedimento_id], map: "ix_ci_proc")
@@ -1606,6 +1637,160 @@ model livro_controlados {
 
   @@index([lote, data_hora(sort: Desc)], map: "ix_livro_lote_data")
   @@index([procedimento_id, data_hora(sort: Desc)], map: "ix_livro_proc_data")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model glosas {
+  id                    BigInt            @id @default(autoincrement())
+  uuid_externo          String            @unique(map: "uq_glosas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id             BigInt
+  conta_id              BigInt
+  conta_item_id         BigInt?
+  guia_tiss_id          BigInt?
+  convenio_id           BigInt
+  motivo                String            @db.VarChar(500)
+  codigo_glosa_tiss     String?           @db.VarChar(10)
+  valor_glosado         Decimal           @db.Decimal(18, 4)
+  data_glosa            DateTime          @db.Date
+  origem                enum_glosa_origem @default(TISS)
+  prazo_recurso         DateTime?         @db.Date
+  recurso               String?
+  data_recurso          DateTime?         @db.Date
+  recurso_documento_url String?           @db.VarChar(500)
+  recurso_por           BigInt?
+  status                enum_glosa_status @default(RECEBIDA)
+  valor_revertido       Decimal           @default(0) @db.Decimal(18, 4)
+  data_resposta_recurso DateTime?         @db.Date
+  motivo_resposta       String?           @db.VarChar(500)
+  created_at            DateTime          @default(now()) @db.Timestamptz(6)
+  created_by            BigInt?
+  updated_at            DateTime?         @db.Timestamptz(6)
+  contas                contas            @relation(fields: [conta_id], references: [id], onUpdate: NoAction)
+  contas_itens          contas_itens?     @relation(fields: [conta_item_id], references: [id], onUpdate: NoAction)
+  convenios             convenios         @relation(fields: [convenio_id], references: [id], onUpdate: NoAction)
+  guias_tiss            guias_tiss?       @relation(fields: [guia_tiss_id], references: [id], onUpdate: NoAction)
+  usuarios              Usuario?          @relation(fields: [recurso_por], references: [id], onUpdate: NoAction)
+
+  @@index([conta_id], map: "ix_glosas_conta")
+  @@index([tenant_id, status, data_glosa(sort: Desc)], map: "ix_glosas_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model guias_tiss {
+  id                    BigInt                @id @default(autoincrement())
+  uuid_externo          String                @unique(map: "uq_guias_tiss_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id             BigInt
+  conta_id              BigInt
+  lote_id               BigInt?
+  tipo_guia             enum_guia_tiss_tipo
+  versao_tiss           String                @db.VarChar(10)
+  numero_guia_prestador String                @db.VarChar(30)
+  numero_guia_operadora String?               @db.VarChar(30)
+  senha_autorizacao     String?               @db.VarChar(40)
+  xml_conteudo          String?
+  hash_xml              String?               @db.VarChar(64)
+  valor_total           Decimal               @default(0) @db.Decimal(18, 4)
+  status                enum_guia_tiss_status @default(GERADA)
+  validacao_xsd_status  String?               @db.VarChar(20)
+  validacao_xsd_erros   Json?
+  data_geracao          DateTime              @default(now()) @db.Timestamptz(6)
+  data_validacao        DateTime?             @db.Timestamptz(6)
+  data_envio            DateTime?             @db.Timestamptz(6)
+  data_resposta         DateTime?             @db.Timestamptz(6)
+  motivo_recusa         String?               @db.VarChar(500)
+  created_at            DateTime              @default(now()) @db.Timestamptz(6)
+  created_by            BigInt?
+  contas_itens          contas_itens[]
+  glosas                glosas[]
+  contas                contas                @relation(fields: [conta_id], references: [id], onUpdate: NoAction)
+  lotes_tiss            lotes_tiss?           @relation(fields: [lote_id], references: [id], onUpdate: NoAction)
+
+  @@unique([tenant_id, numero_guia_prestador], map: "uq_guias_numero")
+  @@index([conta_id], map: "ix_guias_conta")
+  @@index([tenant_id, status, data_geracao(sort: Desc)], map: "ix_guias_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model lotes_tiss {
+  id                  BigInt                @id @default(autoincrement())
+  uuid_externo        String                @unique(map: "uq_lotes_tiss_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id           BigInt
+  convenio_id         BigInt
+  numero_lote         String                @db.VarChar(20)
+  versao_tiss         String                @db.VarChar(10)
+  competencia         String                @db.VarChar(7)
+  data_geracao        DateTime              @default(now()) @db.Timestamptz(6)
+  data_validacao      DateTime?             @db.Timestamptz(6)
+  data_envio          DateTime?             @db.Timestamptz(6)
+  data_processamento  DateTime?             @db.Timestamptz(6)
+  qtd_guias           Int                   @default(0)
+  valor_total         Decimal               @default(0) @db.Decimal(18, 4)
+  hash_xml            String?               @db.VarChar(64)
+  xml_url             String?               @db.VarChar(500)
+  protocolo_operadora String?               @db.VarChar(40)
+  status              enum_lote_tiss_status @default(EM_PREPARACAO)
+  validacao_xsd_erros Json?
+  lote_anterior_id    BigInt?
+  observacao          String?
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  created_by          BigInt?
+  updated_at          DateTime?             @db.Timestamptz(6)
+  guias_tiss          guias_tiss[]
+  convenios           convenios             @relation(fields: [convenio_id], references: [id], onUpdate: NoAction)
+  lotes_tiss          lotes_tiss?           @relation("lotes_tissTolotes_tiss", fields: [lote_anterior_id], references: [id], onUpdate: NoAction)
+  other_lotes_tiss    lotes_tiss[]          @relation("lotes_tissTolotes_tiss")
+
+  @@unique([tenant_id, convenio_id, numero_lote], map: "uq_lote")
+  @@index([convenio_id, competencia], map: "ix_lotes_convenio_comp")
+  @@index([tenant_id, status, data_geracao(sort: Desc)], map: "ix_lotes_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pacotes {
+  id                        BigInt                 @id @default(autoincrement())
+  uuid_externo              String                 @unique(map: "uq_pacotes_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                 BigInt
+  codigo                    String                 @db.VarChar(40)
+  nome                      String                 @db.VarChar(300)
+  descricao                 String?
+  procedimento_principal_id BigInt?
+  convenio_id               BigInt?
+  valor_total               Decimal                @db.Decimal(18, 4)
+  vigencia_inicio           DateTime               @db.Date
+  vigencia_fim              DateTime?              @db.Date
+  ativo                     Boolean                @default(true)
+  created_at                DateTime               @default(now()) @db.Timestamptz(6)
+  created_by                BigInt?
+  updated_at                DateTime?              @db.Timestamptz(6)
+  deleted_at                DateTime?              @db.Timestamptz(6)
+  contas_itens              contas_itens[]
+  convenios                 convenios?             @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  tabelas_procedimentos     tabelas_procedimentos? @relation(fields: [procedimento_principal_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pacotes_itens             pacotes_itens[]
+
+  @@unique([tenant_id, codigo], map: "uq_pacotes")
+  @@index([procedimento_principal_id, vigencia_inicio(sort: Desc)], map: "ix_pacotes_proc_princ")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pacotes_itens {
+  id                    BigInt                @id @default(autoincrement())
+  tenant_id             BigInt
+  pacote_id             BigInt
+  procedimento_id       BigInt
+  quantidade            Decimal               @default(1) @db.Decimal(18, 6)
+  faixa_inicio          String?               @db.VarChar(20)
+  faixa_fim             String?               @db.VarChar(20)
+  pacotes               pacotes               @relation(fields: [pacote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+
+  @@unique([pacote_id, procedimento_id], map: "uq_pi")
+  @@index([pacote_id], map: "ix_pi_pacote")
 }
 
 enum enum_convenio_tipo {
@@ -1934,4 +2119,47 @@ enum enum_livro_controlados_movimento {
   SAIDA
   AJUSTE
   PERDA
+}
+
+enum enum_glosa_origem {
+  TISS
+  MANUAL
+}
+
+enum enum_glosa_status {
+  RECEBIDA
+  EM_ANALISE
+  EM_RECURSO
+  ACATADA
+  REVERTIDA_TOTAL
+  REVERTIDA_PARCIAL
+  PERDA_DEFINITIVA
+}
+
+enum enum_guia_tiss_status {
+  GERADA
+  VALIDADA
+  ENVIADA
+  ACEITA
+  RECUSADA
+  GLOSADA
+}
+
+enum enum_guia_tiss_tipo {
+  CONSULTA
+  SP_SADT
+  INTERNACAO
+  HONORARIOS
+  OUTRAS_DESPESAS
+  RESUMO_INTERNACAO
+  ANEXO_OPME
+}
+
+enum enum_lote_tiss_status {
+  EM_PREPARACAO
+  GERADO
+  VALIDADO
+  ENVIADO
+  PROCESSADO
+  COM_ERRO
 }
