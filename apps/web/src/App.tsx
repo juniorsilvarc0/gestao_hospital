@@ -32,6 +32,14 @@ import { PrescricaoFormPage } from '@/pages/pep/PrescricaoFormPage';
 import { SinaisVitaisFormPage } from '@/pages/pep/SinaisVitaisFormPage';
 import { DocumentoFormPage } from '@/pages/pep/DocumentoFormPage';
 import { LaudosCentralPage } from '@/pages/laudos/LaudosCentralPage';
+import { PainelFarmaciaPage } from '@/pages/farmacia/PainelFarmaciaPage';
+import { LivroControladosPage } from '@/pages/farmacia/LivroControladosPage';
+import { MapaSalasPage } from '@/pages/centro-cirurgico/MapaSalasPage';
+import { AgendaCirurgiasPage } from '@/pages/centro-cirurgico/AgendaCirurgiasPage';
+import { CirurgiaDetalhePage } from '@/pages/centro-cirurgico/CirurgiaDetalhePage';
+import { AgendarCirurgiaPage } from '@/pages/centro-cirurgico/AgendarCirurgiaPage';
+import { KitsCirurgicosPage } from '@/pages/cadastros/KitsCirurgicosPage';
+import { CadernosGabaritosPage } from '@/pages/cadastros/CadernosGabaritosPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -103,6 +111,29 @@ export function App(): JSX.Element {
           element={<DocumentoFormPage />}
         />
         <Route path="/laudos" element={<LaudosCentralPage />} />
+
+        {/* Farmácia (Fase 7) */}
+        <Route path="/farmacia/painel" element={<PainelFarmaciaPage />} />
+        <Route
+          path="/farmacia/controlados"
+          element={<LivroControladosPage />}
+        />
+
+        {/* Centro Cirúrgico (Fase 7) */}
+        <Route
+          path="/centro-cirurgico/mapa"
+          element={<MapaSalasPage />}
+        />
+        <Route path="/cirurgias" element={<AgendaCirurgiasPage />} />
+        <Route path="/cirurgias/nova" element={<AgendarCirurgiaPage />} />
+        <Route path="/cirurgias/:uuid" element={<CirurgiaDetalhePage />} />
+
+        {/* Cadastros vinculados ao centro cirúrgico */}
+        <Route path="/cadastros/kits" element={<KitsCirurgicosPage />} />
+        <Route
+          path="/cadastros/gabaritos"
+          element={<CadernosGabaritosPage />}
+        />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -20,15 +20,19 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Bell,
+  BookOpen,
+  BookCopy,
   Hospital,
   KeyRound,
   LogOut,
+  Package,
   Search,
   ShieldCheck,
   Calendar,
   Users,
   Bed,
   Beaker,
+  HeartPulse,
   Pill,
   Activity,
   ClipboardList,
@@ -59,7 +63,27 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/triagem', label: 'Triagem', icon: Activity },
   { to: '/leitos', label: 'Mapa de leitos', icon: Bed },
   { to: '/laudos', label: 'Central de Laudos', icon: Beaker },
-  { to: '/farmacia', label: 'Farmácia', icon: Pill, comingSoon: true },
+  // Farmácia (Fase 7)
+  { to: '/farmacia/painel', label: 'Painel da farmácia', icon: Pill },
+  {
+    to: '/farmacia/controlados',
+    label: 'Livro de controlados',
+    icon: BookOpen,
+  },
+  // Centro Cirúrgico (Fase 7)
+  {
+    to: '/centro-cirurgico/mapa',
+    label: 'Mapa de salas',
+    icon: HeartPulse,
+  },
+  { to: '/cirurgias', label: 'Agenda de cirurgias', icon: ClipboardList },
+  // Cadastros (centro cirúrgico)
+  { to: '/cadastros/kits', label: 'Kits cirúrgicos', icon: Package },
+  {
+    to: '/cadastros/gabaritos',
+    label: 'Cadernos de gabaritos',
+    icon: BookCopy,
+  },
   { to: '/faturamento', label: 'Faturamento', icon: Receipt, comingSoon: true },
 ];
 
