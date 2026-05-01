@@ -11,9 +11,11 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Prisma,
   enum_leito_status as LeitoStatus,
@@ -32,6 +34,14 @@ import {
 } from '../../dto/leito.dto';
 import { PaginatedResponse, paginate, toBigInt } from '../../dto/common';
 import { LeitoStatusMachine } from '../../infrastructure/leito-status.machine';
+import {
+  LEITO_EVENT_NAMES,
+  type LeitoBloqueadoEventPayload,
+  type LeitoDisponivelEventPayload,
+  type LeitoHigienizandoEventPayload,
+  type LeitoManutencaoEventPayload,
+  type LeitoReservadoEventPayload,
+} from '../../../mapa-leitos/events/leito.events';
 
 interface LeitoRow {
   id: bigint;
@@ -295,13 +305,21 @@ export class UpdateLeitoUseCase {
 
 @Injectable()
 export class ChangeLeitoStatusUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ChangeLeitoStatusUseCase.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Troca o status de um leito com:
    *   1. Validação contra `LeitoStatusMachine`.
    *   2. Otimistic lock: `WHERE id=? AND versao=?` com incremento.
    *      Se afetar 0 linhas → 409 stale data.
+   *   3. Em sucesso, **emite evento via `EventEmitter2`** consumido
+   *      pelo `MapaLeitosService` (Fase 5 Trilha B) que faz o relay
+   *      WebSocket para os clientes do mapa de leitos.
    *
    * Fase 5 estenderá com `paciente_id`/`atendimento_id` para alocação
    * real. Aqui só transitamos o estado e (quando saímos de OCUPADO)
@@ -370,7 +388,74 @@ export class ChangeLeitoStatusUseCase {
       // Improvável (acabamos de atualizar), mas mantemos defesa.
       throw notFound();
     }
+    // Emite evento WS — best-effort. Falha não pode bloquear a
+    // transição administrativa do leito.
+    await this.publicarEventoStatus(updated);
     return toResponse(updated);
+  }
+
+  private async publicarEventoStatus(row: LeitoRow): Promise<void> {
+    try {
+      const ctx = RequestContextStorage.get();
+      if (ctx === undefined) {
+        return;
+      }
+      // Carrega o nome do setor para enriquecer o payload (necessário
+      // para a UI exibir "UTI Geral" sem segunda chamada). Best-effort:
+      // se falhar, segue com nome vazio.
+      const setor = await this.prisma.tx().setores.findUnique({
+        where: { id: row.setor_id },
+        select: { nome: true },
+      });
+      const base = {
+        tenantId: ctx.tenantId.toString(),
+        leitoId: row.id.toString(),
+        leitoCodigo: row.codigo,
+        setorId: row.setor_id.toString(),
+        setorNome: setor?.nome ?? '',
+        versao: row.versao,
+        emitidoEm: new Date().toISOString(),
+      };
+      switch (row.status) {
+        case LeitoStatus.HIGIENIZACAO: {
+          const payload: LeitoHigienizandoEventPayload = { ...base };
+          this.eventEmitter.emit(LEITO_EVENT_NAMES.HIGIENIZANDO, payload);
+          break;
+        }
+        case LeitoStatus.DISPONIVEL: {
+          const payload: LeitoDisponivelEventPayload = { ...base };
+          this.eventEmitter.emit(LEITO_EVENT_NAMES.DISPONIVEL, payload);
+          break;
+        }
+        case LeitoStatus.MANUTENCAO: {
+          const payload: LeitoManutencaoEventPayload = { ...base };
+          this.eventEmitter.emit(LEITO_EVENT_NAMES.MANUTENCAO, payload);
+          break;
+        }
+        case LeitoStatus.BLOQUEADO: {
+          const payload: LeitoBloqueadoEventPayload = { ...base };
+          this.eventEmitter.emit(LEITO_EVENT_NAMES.BLOQUEADO, payload);
+          break;
+        }
+        case LeitoStatus.RESERVADO: {
+          const payload: LeitoReservadoEventPayload = { ...base };
+          this.eventEmitter.emit(LEITO_EVENT_NAMES.RESERVADO, payload);
+          break;
+        }
+        // OCUPADO via este endpoint é rejeitado em `execute()`.
+        case LeitoStatus.OCUPADO:
+        default:
+          break;
+      }
+    } catch (err) {
+      this.logger.warn(
+        {
+          leitoId: row.id.toString(),
+          err: err instanceof Error ? err.message : String(err),
+        },
+        'leitos: publicação de evento WS falhou (não-bloqueante)',
+      );
+    }
   }
 }
 
