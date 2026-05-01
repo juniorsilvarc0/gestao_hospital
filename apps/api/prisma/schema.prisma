@@ -406,9 +406,12 @@ model pacientes {
   acessos_prontuario      acessos_prontuario[]
   agendamentos            agendamentos[]
   atendimentos            atendimentos[]
+  cirurgias               cirurgias[]
   contas                  contas[]
+  dispensacoes            dispensacoes[]
   documentos_emitidos     documentos_emitidos[]
   leitos                  leitos[]
+  livro_controlados       livro_controlados[]
   pacientes               pacientes?                             @relation("pacientesTopacientes", fields: [paciente_mae_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   other_pacientes         pacientes[]                            @relation("pacientesTopacientes")
   tenants                 Tenant                                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -505,7 +508,13 @@ model prestadores {
   agendas_recursos           agendas_recursos[]
   analises_farmaceuticas     analises_farmaceuticas[]
   atendimentos               atendimentos[]
+  cadernos_gabaritos         cadernos_gabaritos[]
+  cirurgias                  cirurgias[]
+  cirurgias_equipe           cirurgias_equipe[]
+  contas_itens               contas_itens[]
+  dispensacoes               dispensacoes[]
   documentos_emitidos        documentos_emitidos[]
+  livro_controlados          livro_controlados[]
   tenants                    Tenant                       @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   prestadores_especialidades prestadores_especialidades[]
   resultados_exame           resultados_exame[]
@@ -541,6 +550,7 @@ model salas_cirurgicas {
   deleted_at       DateTime?          @db.Timestamptz(6)
   uuid_externo     String             @unique(map: "uq_salas_cirurgicas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendas_recursos agendas_recursos[]
+  cirurgias        cirurgias[]
   setores          setores            @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
   tenants          Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
@@ -563,6 +573,8 @@ model setores {
   deleted_at             DateTime?            @db.Timestamptz(6)
   uuid_externo           String               @unique(map: "uq_setores_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos           atendimentos[]
+  contas_itens           contas_itens[]
+  dispensacoes           dispensacoes[]
   equipamentos           equipamentos[]
   leitos                 leitos[]
   salas_cirurgicas       salas_cirurgicas[]
@@ -643,6 +655,13 @@ model tabelas_procedimentos {
   updated_at                   DateTime?                      @db.Timestamptz(6)
   uuid_externo                 String                         @unique(map: "uq_tabelas_procedimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   agendamentos                 agendamentos[]
+  cadernos_gabaritos           cadernos_gabaritos[]
+  cadernos_gabaritos_itens     cadernos_gabaritos_itens[]
+  cirurgias                    cirurgias[]
+  contas_itens                 contas_itens[]
+  dispensacoes_itens           dispensacoes_itens[]
+  kits_cirurgicos_itens        kits_cirurgicos_itens[]
+  livro_controlados            livro_controlados[]
   prescricoes_itens            prescricoes_itens[]
   procedimento_principio_ativo procedimento_principio_ativo[]
   solicitacoes_exame_itens     solicitacoes_exame_itens[]
@@ -949,7 +968,9 @@ model atendimentos {
   unidades_atendimento                                    unidades_atendimento                  @relation(fields: [unidade_atendimento_id], references: [id], onUpdate: NoAction)
   unidades_faturamento                                    unidades_faturamento                  @relation(fields: [unidade_faturamento_id], references: [id], onUpdate: NoAction)
   usuarios_atendimentos_updated_byTousuarios              Usuario?                              @relation("atendimentos_updated_byTousuarios", fields: [updated_by], references: [id], onUpdate: NoAction)
+  cirurgias                                               cirurgias[]
   contas                                                  contas?
+  dispensacoes                                            dispensacoes[]
   documentos_emitidos                                     documentos_emitidos[]
   leitos_leitos_atendimento_idToatendimentos              leitos[]                              @relation("leitos_atendimento_idToatendimentos")
   solicitacoes_exame                                      solicitacoes_exame[]
@@ -985,11 +1006,13 @@ model contas {
   updated_at              DateTime?          @db.Timestamptz(6)
   deleted_at              DateTime?          @db.Timestamptz(6)
   versao                  Int                @default(1)
+  cirurgias               cirurgias[]
   atendimentos            atendimentos       @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
   convenios               convenios?         @relation(fields: [convenio_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   pacientes               pacientes          @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
   planos                  planos?            @relation(fields: [plano_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   tenants                 Tenant             @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  contas_itens            contas_itens[]
 
   @@unique([tenant_id, numero_conta], map: "uq_contas_numero")
 }
@@ -1171,6 +1194,7 @@ model prescricoes_itens {
   alerta_interacao      Json?
   alerta_dose_max       Json?
   status_item           String                @default("ATIVO") @db.VarChar(30)
+  dispensacoes_itens    dispensacoes_itens[]
   tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
 
   @@index([prescricao_id], map: "ix_pi_prescricao")
@@ -1302,6 +1326,286 @@ model solicitacoes_exame_itens {
   solicitacoes_exame                                                              solicitacoes_exame            @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([solicitacao_id], map: "ix_sol_itens_sol")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cadernos_gabaritos {
+  id                        BigInt                     @id @default(autoincrement())
+  uuid_externo              String                     @unique(map: "uq_cg_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                 BigInt
+  procedimento_principal_id BigInt
+  cirurgiao_id              BigInt?
+  versao                    Int                        @default(1)
+  ativo                     Boolean                    @default(true)
+  observacao                String?
+  created_at                DateTime                   @default(now()) @db.Timestamptz(6)
+  created_by                BigInt?
+  updated_at                DateTime?                  @db.Timestamptz(6)
+  deleted_at                DateTime?                  @db.Timestamptz(6)
+  prestadores               prestadores?               @relation(fields: [cirurgiao_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos     tabelas_procedimentos      @relation(fields: [procedimento_principal_id], references: [id], onUpdate: NoAction)
+  cadernos_gabaritos_itens  cadernos_gabaritos_itens[]
+  cirurgias                 cirurgias[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cadernos_gabaritos_itens {
+  id                    BigInt                @id @default(autoincrement())
+  tenant_id             BigInt
+  caderno_id            BigInt
+  procedimento_id       BigInt
+  quantidade_padrao     Decimal               @db.Decimal(18, 6)
+  obrigatorio           Boolean               @default(false)
+  observacao            String?               @db.VarChar(300)
+  cadernos_gabaritos    cadernos_gabaritos    @relation(fields: [caderno_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+
+  @@unique([caderno_id, procedimento_id], map: "uq_cg_proc")
+  @@index([caderno_id], map: "ix_cg_itens_caderno")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This table contains exclusion constraints and requires additional setup for migrations. Visit https://pris.ly/d/exclusion-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cirurgias {
+  id                        BigInt                        @id @default(autoincrement())
+  uuid_externo              String                        @unique(map: "uq_cirurgias_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                 BigInt
+  atendimento_id            BigInt
+  paciente_id               BigInt
+  procedimento_principal_id BigInt
+  procedimentos_secundarios Json?
+  sala_id                   BigInt
+  data_hora_agendada        DateTime                      @db.Timestamptz(6)
+  duracao_estimada_minutos  Int?
+  data_hora_inicio          DateTime?                     @db.Timestamptz(6)
+  data_hora_fim             DateTime?                     @db.Timestamptz(6)
+  cirurgiao_id              BigInt
+  tipo_anestesia            enum_cirurgia_tipo_anestesia?
+  classificacao_cirurgia    enum_cirurgia_classificacao   @default(ELETIVA)
+  kit_cirurgico_id          BigInt?
+  caderno_gabarito_id       BigInt?
+  ficha_cirurgica           Json?
+  ficha_anestesica          Json?
+  intercorrencias           String?
+  status                    enum_cirurgia_status          @default(AGENDADA)
+  conta_id                  BigInt?
+  opme_solicitada           Json?
+  opme_autorizada           Json?
+  opme_utilizada            Json?
+  opme_autorizacao_em       DateTime?                     @db.Timestamptz(6)
+  opme_autorizacao_por      BigInt?
+  cancelado_em              DateTime?                     @db.Timestamptz(6)
+  cancelado_por             BigInt?
+  cancelamento_motivo       String?                       @db.VarChar(500)
+  created_at                DateTime                      @default(now()) @db.Timestamptz(6)
+  created_by                BigInt?
+  updated_at                DateTime?                     @db.Timestamptz(6)
+  deleted_at                DateTime?                     @db.Timestamptz(6)
+  atendimentos              atendimentos                  @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  cadernos_gabaritos        cadernos_gabaritos?           @relation(fields: [caderno_gabarito_id], references: [id], onUpdate: NoAction)
+  prestadores               prestadores                   @relation(fields: [cirurgiao_id], references: [id], onUpdate: NoAction)
+  contas                    contas?                       @relation(fields: [conta_id], references: [id], onUpdate: NoAction)
+  kits_cirurgicos           kits_cirurgicos?              @relation(fields: [kit_cirurgico_id], references: [id], onUpdate: NoAction)
+  pacientes                 pacientes                     @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos     tabelas_procedimentos         @relation(fields: [procedimento_principal_id], references: [id], onUpdate: NoAction)
+  salas_cirurgicas          salas_cirurgicas              @relation(fields: [sala_id], references: [id], onUpdate: NoAction)
+  cirurgias_equipe          cirurgias_equipe[]
+
+  @@index([atendimento_id], map: "ix_cir_atend")
+  @@index([cirurgiao_id, data_hora_agendada(sort: Desc)], map: "ix_cir_cirurgiao")
+  @@index([paciente_id], map: "ix_cir_paciente")
+  @@index([sala_id, data_hora_agendada], map: "ix_cir_sala_data")
+  @@index([tenant_id, status, data_hora_agendada], map: "ix_cir_status")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cirurgias_equipe {
+  id            BigInt      @id @default(autoincrement())
+  tenant_id     BigInt
+  cirurgia_id   BigInt
+  prestador_id  BigInt
+  funcao        String      @db.VarChar(40)
+  ordem         Int         @default(1)
+  conta_item_id BigInt?
+  cirurgias     cirurgias   @relation(fields: [cirurgia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prestadores   prestadores @relation(fields: [prestador_id], references: [id], onUpdate: NoAction)
+
+  @@unique([cirurgia_id, prestador_id, funcao], map: "uq_cir_equipe")
+  @@index([cirurgia_id], map: "ix_cir_equipe_cir")
+  @@index([prestador_id], map: "ix_cir_equipe_pre")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model contas_itens {
+  id                      BigInt                 @id @default(autoincrement())
+  uuid_externo            String                 @unique(map: "uq_contas_itens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id               BigInt
+  conta_id                BigInt
+  procedimento_id         BigInt
+  grupo_gasto             enum_grupo_gasto
+  origem                  enum_conta_origem_item
+  origem_referencia_id    BigInt?
+  origem_referencia_tipo  String?                @db.VarChar(40)
+  quantidade              Decimal                @db.Decimal(18, 6)
+  valor_unitario          Decimal                @default(0) @db.Decimal(18, 6)
+  valor_total             Decimal                @default(0) @db.Decimal(18, 4)
+  prestador_executante_id BigInt?
+  data_realizacao         DateTime?              @db.Timestamptz(6)
+  setor_id                BigInt?
+  autorizado              Boolean                @default(false)
+  numero_autorizacao      String?                @db.VarChar(40)
+  fora_pacote             Boolean                @default(false)
+  pacote_id               BigInt?
+  lote                    String?                @db.VarChar(50)
+  validade_lote           DateTime?              @db.Date
+  registro_anvisa         String?                @db.VarChar(40)
+  fabricante              String?                @db.VarChar(200)
+  glosado                 Boolean                @default(false)
+  valor_glosa             Decimal                @default(0) @db.Decimal(18, 4)
+  guia_tiss_id            BigInt?
+  tabela_tiss_origem      String?                @db.VarChar(10)
+  created_at              DateTime               @default(now()) @db.Timestamptz(6)
+  created_by              BigInt?
+  updated_at              DateTime?              @db.Timestamptz(6)
+  deleted_at              DateTime?              @db.Timestamptz(6)
+  deleted_by              BigInt?
+  contas                  contas                 @relation(fields: [conta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prestadores             prestadores?           @relation(fields: [prestador_executante_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos   tabelas_procedimentos  @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+  setores                 setores?               @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+
+  @@index([origem, origem_referencia_id], map: "ix_ci_origem")
+  @@index([procedimento_id], map: "ix_ci_proc")
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model dispensacoes {
+  id                           BigInt                  @default(autoincrement())
+  uuid_externo                 String                  @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                    BigInt
+  atendimento_id               BigInt
+  paciente_id                  BigInt
+  prescricao_id                BigInt?
+  prescricao_data_hora         DateTime?               @db.Timestamptz(6)
+  cirurgia_id                  BigInt?
+  farmaceutico_id              BigInt
+  setor_destino_id             BigInt?
+  data_hora                    DateTime                @db.Timestamptz(6)
+  turno                        String?                 @db.VarChar(20)
+  tipo                         enum_dispensacao_tipo
+  status                       enum_dispensacao_status @default(PENDENTE)
+  observacao                   String?                 @db.VarChar(500)
+  dispensacao_origem_id        BigInt?
+  dispensacao_origem_data_hora DateTime?               @db.Timestamptz(6)
+  created_at                   DateTime                @default(now()) @db.Timestamptz(6)
+  created_by                   BigInt?
+  updated_at                   DateTime?               @db.Timestamptz(6)
+  atendimentos                 atendimentos            @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  prestadores                  prestadores             @relation(fields: [farmaceutico_id], references: [id], onUpdate: NoAction)
+  pacientes                    pacientes               @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  setores                      setores?                @relation(fields: [setor_destino_id], references: [id], onUpdate: NoAction)
+
+  @@id([id, data_hora])
+  @@unique([uuid_externo, data_hora], map: "uq_dispensacoes_uuid")
+  @@index([atendimento_id, data_hora(sort: Desc)], map: "ix_disp_atend_data")
+  @@index([paciente_id, data_hora(sort: Desc)], map: "ix_disp_paciente")
+  @@index([tenant_id, turno, data_hora(sort: Desc)], map: "ix_disp_turno")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model dispensacoes_itens {
+  id                        BigInt                  @id @default(autoincrement())
+  uuid_externo              String                  @unique(map: "uq_dispensacoes_itens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                 BigInt
+  dispensacao_id            BigInt
+  dispensacao_data_hora     DateTime                @db.Timestamptz(6)
+  procedimento_id           BigInt
+  prescricao_item_id        BigInt?
+  quantidade_prescrita      Decimal                 @db.Decimal(18, 6)
+  quantidade_dispensada     Decimal                 @db.Decimal(18, 6)
+  unidade_medida            String?                 @db.VarChar(20)
+  fator_conversao_aplicado  Decimal?                @db.Decimal(18, 6)
+  justificativa_divergencia String?                 @db.VarChar(500)
+  lote                      String?                 @db.VarChar(50)
+  validade                  DateTime?               @db.Date
+  conta_item_id             BigInt?
+  status                    enum_dispensacao_status @default(PENDENTE)
+  prescricoes_itens         prescricoes_itens?      @relation(fields: [prescricao_item_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos     tabelas_procedimentos   @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+  livro_controlados         livro_controlados[]
+
+  @@index([dispensacao_id, dispensacao_data_hora], map: "ix_di_dispensacao")
+  @@index([procedimento_id], map: "ix_di_proc")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model kits_cirurgicos {
+  id                    BigInt                  @id @default(autoincrement())
+  uuid_externo          String                  @unique(map: "uq_kits_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id             BigInt
+  codigo                String                  @db.VarChar(40)
+  nome                  String                  @db.VarChar(200)
+  descricao             String?
+  ativo                 Boolean                 @default(true)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  created_by            BigInt?
+  updated_at            DateTime?               @db.Timestamptz(6)
+  deleted_at            DateTime?               @db.Timestamptz(6)
+  cirurgias             cirurgias[]
+  kits_cirurgicos_itens kits_cirurgicos_itens[]
+
+  @@unique([tenant_id, codigo], map: "uq_kits")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model kits_cirurgicos_itens {
+  id                    BigInt                @id @default(autoincrement())
+  tenant_id             BigInt
+  kit_id                BigInt
+  procedimento_id       BigInt
+  quantidade            Decimal               @db.Decimal(18, 6)
+  obrigatorio           Boolean               @default(true)
+  kits_cirurgicos       kits_cirurgicos       @relation(fields: [kit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+
+  @@unique([kit_id, procedimento_id], map: "uq_kit_proc")
+  @@index([kit_id], map: "ix_kit_itens_kit")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model livro_controlados {
+  id                    BigInt                           @id @default(autoincrement())
+  uuid_externo          String                           @unique(map: "uq_livro_controlados_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id             BigInt
+  data_hora             DateTime                         @db.Timestamptz(6)
+  procedimento_id       BigInt
+  lote                  String                           @db.VarChar(50)
+  quantidade            Decimal                          @db.Decimal(18, 6)
+  saldo_anterior        Decimal                          @db.Decimal(18, 6)
+  saldo_atual           Decimal                          @db.Decimal(18, 6)
+  tipo_movimento        enum_livro_controlados_movimento
+  paciente_id           BigInt?
+  prescricao_id         BigInt?
+  prescricao_data_hora  DateTime?                        @db.Timestamptz(6)
+  dispensacao_item_id   BigInt?
+  receita_documento_url String?                          @db.VarChar(500)
+  farmaceutico_id       BigInt
+  observacao            String?                          @db.VarChar(500)
+  created_at            DateTime                         @default(now()) @db.Timestamptz(6)
+  dispensacoes_itens    dispensacoes_itens?              @relation(fields: [dispensacao_item_id], references: [id], onUpdate: NoAction)
+  prestadores           prestadores                      @relation(fields: [farmaceutico_id], references: [id], onUpdate: NoAction)
+  pacientes             pacientes?                       @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos tabelas_procedimentos            @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+
+  @@index([lote, data_hora(sort: Desc)], map: "ix_livro_lote_data")
+  @@index([procedimento_id, data_hora(sort: Desc)], map: "ix_livro_proc_data")
 }
 
 enum enum_convenio_tipo {
@@ -1573,4 +1877,61 @@ enum enum_solicitacao_exame_urgencia {
   ROTINA
   URGENTE
   EMERGENCIA
+}
+
+enum enum_cirurgia_classificacao {
+  ELETIVA
+  URGENCIA
+  EMERGENCIA
+}
+
+enum enum_cirurgia_status {
+  AGENDADA
+  CONFIRMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+  SUSPENSA
+}
+
+enum enum_cirurgia_tipo_anestesia {
+  GERAL
+  RAQUIDIANA
+  PERIDURAL
+  BLOQUEIO
+  LOCAL
+  SEDACAO
+  NENHUMA
+}
+
+enum enum_conta_origem_item {
+  PEP
+  PRESCRICAO
+  CIRURGIA
+  EXAME
+  MANUAL
+  FARMACIA
+  PACOTE
+}
+
+enum enum_dispensacao_status {
+  PENDENTE
+  SEPARADA
+  DISPENSADA
+  DEVOLVIDA
+  CANCELADA
+}
+
+enum enum_dispensacao_tipo {
+  PRESCRICAO
+  AVULSA
+  KIT_CIRURGICO
+  DEVOLUCAO
+}
+
+enum enum_livro_controlados_movimento {
+  ENTRADA
+  SAIDA
+  AJUSTE
+  PERDA
 }
