@@ -407,11 +407,14 @@ model pacientes {
   agendamentos            agendamentos[]
   atendimentos            atendimentos[]
   contas                  contas[]
+  documentos_emitidos     documentos_emitidos[]
   leitos                  leitos[]
   pacientes               pacientes?                             @relation("pacientesTopacientes", fields: [paciente_mae_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   other_pacientes         pacientes[]                            @relation("pacientesTopacientes")
   tenants                 Tenant                                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   pacientes_convenios     pacientes_convenios[]
+  resultados_exame        resultados_exame[]
+  solicitacoes_exame      solicitacoes_exame[]
   solicitacoes_lgpd       solicitacoes_lgpd[]
 
   @@unique([tenant_id, cns], map: "uq_pacientes_cns_tenant")
@@ -500,9 +503,13 @@ model prestadores {
   updated_at                 DateTime?                    @db.Timestamptz(6)
   deleted_at                 DateTime?                    @db.Timestamptz(6)
   agendas_recursos           agendas_recursos[]
+  analises_farmaceuticas     analises_farmaceuticas[]
   atendimentos               atendimentos[]
+  documentos_emitidos        documentos_emitidos[]
   tenants                    Tenant                       @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   prestadores_especialidades prestadores_especialidades[]
+  resultados_exame           resultados_exame[]
+  solicitacoes_exame         solicitacoes_exame[]
   usuarios                   Usuario[]
 
   @@unique([tenant_id, tipo_conselho, numero_conselho, uf_conselho], map: "uq_prestadores_conselho")
@@ -608,36 +615,39 @@ model tabelas_precos_itens {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model tabelas_procedimentos {
-  id                   BigInt                 @id @default(autoincrement())
-  tenant_id            BigInt
-  codigo_tuss          String                 @db.VarChar(20)
-  codigo_cbhpm         String?                @db.VarChar(20)
-  codigo_amb           String?                @db.VarChar(20)
-  codigo_sus           String?                @db.VarChar(20)
-  codigo_anvisa        String?                @db.VarChar(20)
-  codigo_ean           String?                @db.VarChar(20)
-  nome                 String                 @db.VarChar(500)
-  nome_reduzido        String?                @db.VarChar(120)
-  tipo                 enum_procedimento_tipo
-  grupo_gasto          enum_grupo_gasto
-  tabela_tiss          String?                @db.VarChar(10)
-  unidade_medida       String?                @db.VarChar(20)
-  fator_conversao      Decimal?               @default(1.0) @db.Decimal(18, 6)
-  valor_referencia     Decimal?               @db.Decimal(18, 4)
-  porte                String?                @db.VarChar(10)
-  custo_operacional    Decimal?               @db.Decimal(18, 4)
-  precisa_autorizacao  Boolean                @default(false)
-  precisa_assinatura   Boolean                @default(false)
-  precisa_lote         Boolean                @default(false)
-  controlado           Boolean                @default(false)
-  alto_custo           Boolean                @default(false)
-  ativo                Boolean                @default(true)
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?              @db.Timestamptz(6)
-  uuid_externo         String                 @unique(map: "uq_tabelas_procedimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  agendamentos         agendamentos[]
-  tabelas_precos_itens tabelas_precos_itens[]
-  tenants              Tenant                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id                           BigInt                         @id @default(autoincrement())
+  tenant_id                    BigInt
+  codigo_tuss                  String                         @db.VarChar(20)
+  codigo_cbhpm                 String?                        @db.VarChar(20)
+  codigo_amb                   String?                        @db.VarChar(20)
+  codigo_sus                   String?                        @db.VarChar(20)
+  codigo_anvisa                String?                        @db.VarChar(20)
+  codigo_ean                   String?                        @db.VarChar(20)
+  nome                         String                         @db.VarChar(500)
+  nome_reduzido                String?                        @db.VarChar(120)
+  tipo                         enum_procedimento_tipo
+  grupo_gasto                  enum_grupo_gasto
+  tabela_tiss                  String?                        @db.VarChar(10)
+  unidade_medida               String?                        @db.VarChar(20)
+  fator_conversao              Decimal?                       @default(1.0) @db.Decimal(18, 6)
+  valor_referencia             Decimal?                       @db.Decimal(18, 4)
+  porte                        String?                        @db.VarChar(10)
+  custo_operacional            Decimal?                       @db.Decimal(18, 4)
+  precisa_autorizacao          Boolean                        @default(false)
+  precisa_assinatura           Boolean                        @default(false)
+  precisa_lote                 Boolean                        @default(false)
+  controlado                   Boolean                        @default(false)
+  alto_custo                   Boolean                        @default(false)
+  ativo                        Boolean                        @default(true)
+  created_at                   DateTime                       @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime?                      @db.Timestamptz(6)
+  uuid_externo                 String                         @unique(map: "uq_tabelas_procedimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  agendamentos                 agendamentos[]
+  prescricoes_itens            prescricoes_itens[]
+  procedimento_principio_ativo procedimento_principio_ativo[]
+  solicitacoes_exame_itens     solicitacoes_exame_itens[]
+  tabelas_precos_itens         tabelas_precos_itens[]
+  tenants                      Tenant                         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo_tuss], map: "uq_proc_tuss")
 }
@@ -940,7 +950,9 @@ model atendimentos {
   unidades_faturamento                                    unidades_faturamento                  @relation(fields: [unidade_faturamento_id], references: [id], onUpdate: NoAction)
   usuarios_atendimentos_updated_byTousuarios              Usuario?                              @relation("atendimentos_updated_byTousuarios", fields: [updated_by], references: [id], onUpdate: NoAction)
   contas                                                  contas?
+  documentos_emitidos                                     documentos_emitidos[]
   leitos_leitos_atendimento_idToatendimentos              leitos[]                              @relation("leitos_atendimento_idToatendimentos")
+  solicitacoes_exame                                      solicitacoes_exame[]
   triagens                                                triagens[]
 
   @@unique([tenant_id, numero_atendimento], map: "uq_atendimentos_numero")
@@ -1011,6 +1023,285 @@ model triagens {
   usuarios         Usuario                              @relation(fields: [triagem_por], references: [id], onUpdate: NoAction)
 
   @@index([atendimento_id, triagem_em(sort: Desc)], map: "ix_triagens_atendimento")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model analises_farmaceuticas {
+  id                   BigInt                           @id @default(autoincrement())
+  uuid_externo         String                           @unique(map: "uq_analises_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id            BigInt
+  prescricao_id        BigInt
+  prescricao_data_hora DateTime                         @db.Timestamptz(6)
+  farmaceutico_id      BigInt
+  status               enum_analise_farmaceutica_status
+  parecer              String?
+  ressalvas            Json?
+  data_hora            DateTime                         @default(now()) @db.Timestamptz(6)
+  created_by           BigInt
+  prestadores          prestadores                      @relation(fields: [farmaceutico_id], references: [id], onUpdate: NoAction)
+
+  @@index([prescricao_id, data_hora(sort: Desc)], map: "ix_analises_prescricao")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model documentos_emitidos {
+  id                 BigInt              @id @default(autoincrement())
+  uuid_externo       String              @unique(map: "uq_documentos_emitidos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id          BigInt
+  atendimento_id     BigInt?
+  paciente_id        BigInt
+  emissor_id         BigInt
+  tipo               enum_documento_tipo
+  conteudo           Json
+  pdf_url            String?             @db.VarChar(500)
+  assinatura_digital Json?
+  assinado_em        DateTime?           @db.Timestamptz(6)
+  data_emissao       DateTime            @default(now()) @db.Timestamptz(6)
+  validade_dias      Int?
+  versao_anterior_id BigInt?
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+  atendimentos       atendimentos?       @relation(fields: [atendimento_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  prestadores        prestadores         @relation(fields: [emissor_id], references: [id], onUpdate: NoAction)
+  pacientes          pacientes           @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+
+  @@index([emissor_id, data_emissao(sort: Desc)], map: "ix_docs_emissor")
+  @@index([paciente_id, data_emissao(sort: Desc)], map: "ix_docs_paciente")
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model evolucoes {
+  id                 BigInt                          @default(autoincrement())
+  uuid_externo       String                          @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id          BigInt
+  atendimento_id     BigInt
+  paciente_id        BigInt
+  profissional_id    BigInt
+  tipo_profissional  enum_evolucao_tipo_profissional
+  tipo               enum_evolucao_tipo
+  data_hora          DateTime                        @db.Timestamptz(6)
+  conteudo           Json
+  conteudo_html      String?
+  texto_livre        String?
+  cids               Json?
+  sinais_vitais      Json?
+  assinatura_digital Json?
+  assinada_em        DateTime?                       @db.Timestamptz(6)
+  versao_anterior_id BigInt?
+  created_at         DateTime                        @default(now()) @db.Timestamptz(6)
+  created_by         BigInt
+  updated_at         DateTime?                       @db.Timestamptz(6)
+  updated_by         BigInt?
+  deleted_at         DateTime?                       @db.Timestamptz(6)
+
+  @@id([id, data_hora])
+  @@unique([uuid_externo, data_hora], map: "uq_evolucoes_uuid")
+  @@index([atendimento_id, data_hora(sort: Desc)], map: "ix_evol_atend")
+  @@index([paciente_id, data_hora(sort: Desc)], map: "ix_evol_paciente")
+  @@index([profissional_id, data_hora(sort: Desc)], map: "ix_evol_profissional")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model interacoes_medicamentosas {
+  id                                                                         BigInt                    @id @default(autoincrement())
+  principio_a                                                                BigInt
+  principio_b                                                                BigInt
+  severidade                                                                 enum_interacao_severidade
+  descricao                                                                  String
+  fonte                                                                      String?                   @db.VarChar(120)
+  ativa                                                                      Boolean                   @default(true)
+  created_at                                                                 DateTime                  @default(now()) @db.Timestamptz(6)
+  principios_ativos_interacoes_medicamentosas_principio_aToprincipios_ativos principios_ativos         @relation("interacoes_medicamentosas_principio_aToprincipios_ativos", fields: [principio_a], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  principios_ativos_interacoes_medicamentosas_principio_bToprincipios_ativos principios_ativos         @relation("interacoes_medicamentosas_principio_bToprincipios_ativos", fields: [principio_b], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([principio_a, principio_b], map: "uq_interacao_par")
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model prescricoes {
+  id                     BigInt                 @default(autoincrement())
+  uuid_externo           String                 @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id              BigInt
+  atendimento_id         BigInt
+  paciente_id            BigInt
+  prescritor_id          BigInt
+  data_hora              DateTime               @db.Timestamptz(6)
+  tipo                   enum_prescricao_tipo
+  validade_inicio        DateTime               @db.Timestamptz(6)
+  validade_fim           DateTime?              @db.Timestamptz(6)
+  status                 enum_prescricao_status @default(AGUARDANDO_ANALISE)
+  prescricao_anterior_id BigInt?
+  observacao_geral       String?
+  assinatura_digital     Json?
+  assinada_em            DateTime?              @db.Timestamptz(6)
+  suspensa_em            DateTime?              @db.Timestamptz(6)
+  suspensa_por           BigInt?
+  suspensa_motivo        String?                @db.VarChar(500)
+  created_at             DateTime               @default(now()) @db.Timestamptz(6)
+  created_by             BigInt?
+  updated_at             DateTime?              @db.Timestamptz(6)
+
+  @@id([id, data_hora])
+  @@unique([uuid_externo, data_hora], map: "uq_prescricoes_uuid")
+  @@index([atendimento_id, data_hora(sort: Desc)], map: "ix_prescr_atend")
+  @@index([paciente_id, data_hora(sort: Desc)], map: "ix_prescr_paciente")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model prescricoes_itens {
+  id                    BigInt                @id @default(autoincrement())
+  uuid_externo          String                @unique(map: "uq_prescricoes_itens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id             BigInt
+  prescricao_id         BigInt
+  prescricao_data_hora  DateTime              @db.Timestamptz(6)
+  procedimento_id       BigInt
+  quantidade            Decimal               @db.Decimal(18, 6)
+  unidade_medida        String?               @db.VarChar(20)
+  dose                  String?               @db.VarChar(50)
+  via                   String?               @db.VarChar(40)
+  frequencia            String?               @db.VarChar(50)
+  horarios              Json?
+  duracao_dias          Int?
+  urgente               Boolean               @default(false)
+  se_necessario         Boolean               @default(false)
+  observacao            String?               @db.VarChar(500)
+  alerta_alergia        Json?
+  alerta_interacao      Json?
+  alerta_dose_max       Json?
+  status_item           String                @default("ATIVO") @db.VarChar(30)
+  tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+
+  @@index([prescricao_id], map: "ix_pi_prescricao")
+  @@index([procedimento_id], map: "ix_pi_proc")
+}
+
+model principios_ativos {
+  id                                                                                 BigInt                         @id @default(autoincrement())
+  uuid_externo                                                                       String                         @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome                                                                               String                         @unique(map: "uq_principios_ativos_nome") @db.VarChar(200)
+  nome_ingles                                                                        String?                        @db.VarChar(200)
+  classe_atc                                                                         String?                        @db.VarChar(20)
+  dose_max_dia                                                                       Decimal?                       @db.Decimal(18, 4)
+  unidade_dose                                                                       String?                        @db.VarChar(20)
+  observacao                                                                         String?                        @db.VarChar(500)
+  ativo                                                                              Boolean                        @default(true)
+  created_at                                                                         DateTime                       @default(now()) @db.Timestamptz(6)
+  interacoes_medicamentosas_interacoes_medicamentosas_principio_aToprincipios_ativos interacoes_medicamentosas[]    @relation("interacoes_medicamentosas_principio_aToprincipios_ativos")
+  interacoes_medicamentosas_interacoes_medicamentosas_principio_bToprincipios_ativos interacoes_medicamentosas[]    @relation("interacoes_medicamentosas_principio_bToprincipios_ativos")
+  procedimento_principio_ativo                                                       procedimento_principio_ativo[]
+}
+
+model procedimento_principio_ativo {
+  procedimento_id       BigInt
+  principio_id          BigInt
+  principios_ativos     principios_ativos     @relation(fields: [principio_id], references: [id], onUpdate: NoAction)
+  tabelas_procedimentos tabelas_procedimentos @relation(fields: [procedimento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([procedimento_id, principio_id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model resultados_exame {
+  id                                                                                      BigInt                        @id @default(autoincrement())
+  uuid_externo                                                                            String                        @unique(map: "uq_resultados_exame_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                                                               BigInt
+  solicitacao_item_id                                                                     BigInt
+  paciente_id                                                                             BigInt
+  data_coleta                                                                             DateTime?                     @db.Timestamptz(6)
+  data_processamento                                                                      DateTime?                     @db.Timestamptz(6)
+  data_laudo                                                                              DateTime?                     @db.Timestamptz(6)
+  laudista_id                                                                             BigInt?
+  laudo_estruturado                                                                       Json?
+  laudo_texto                                                                             String?
+  laudo_pdf_url                                                                           String?                       @db.VarChar(500)
+  imagens_urls                                                                            Json?
+  status                                                                                  enum_solicitacao_exame_status
+  assinatura_digital                                                                      Json?
+  assinado_em                                                                             DateTime?                     @db.Timestamptz(6)
+  versao_anterior_id                                                                      BigInt?
+  created_at                                                                              DateTime                      @default(now()) @db.Timestamptz(6)
+  prestadores                                                                             prestadores?                  @relation(fields: [laudista_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pacientes                                                                               pacientes                     @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  solicitacoes_exame_itens_resultados_exame_solicitacao_item_idTosolicitacoes_exame_itens solicitacoes_exame_itens      @relation("resultados_exame_solicitacao_item_idTosolicitacoes_exame_itens", fields: [solicitacao_item_id], references: [id], onUpdate: NoAction)
+  solicitacoes_exame_itens_solicitacoes_exame_itens_resultado_idToresultados_exame        solicitacoes_exame_itens[]    @relation("solicitacoes_exame_itens_resultado_idToresultados_exame")
+
+  @@index([paciente_id, data_laudo(sort: Desc)], map: "ix_res_exame_paciente")
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sinais_vitais {
+  id               BigInt   @default(autoincrement())
+  uuid_externo     String   @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id        BigInt
+  atendimento_id   BigInt
+  paciente_id      BigInt
+  registrado_por   BigInt
+  data_hora        DateTime @db.Timestamptz(6)
+  pa_sistolica     Int?
+  pa_diastolica    Int?
+  fc               Int?
+  fr               Int?
+  temperatura      Decimal? @db.Decimal(4, 1)
+  sat_o2           Int?
+  glicemia         Int?
+  peso_kg          Decimal? @db.Decimal(5, 2)
+  altura_cm        Int?
+  dor_eva          Int?     @db.SmallInt
+  observacao       String?
+  valor_confirmado Boolean  @default(false)
+  justificativa    String?  @db.VarChar(500)
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([id, data_hora])
+  @@index([atendimento_id, data_hora(sort: Desc)], map: "ix_sv_atend")
+  @@index([paciente_id, data_hora(sort: Desc)], map: "ix_sv_paciente")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model solicitacoes_exame {
+  id                       BigInt                          @id @default(autoincrement())
+  uuid_externo             String                          @unique(map: "uq_solicitacoes_exame_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                BigInt
+  atendimento_id           BigInt
+  paciente_id              BigInt
+  solicitante_id           BigInt
+  urgencia                 enum_solicitacao_exame_urgencia @default(ROTINA)
+  indicacao_clinica        String
+  numero_guia              String?                         @db.VarChar(30)
+  status                   enum_solicitacao_exame_status   @default(SOLICITADO)
+  data_solicitacao         DateTime                        @default(now()) @db.Timestamptz(6)
+  data_realizacao          DateTime?                       @db.Timestamptz(6)
+  observacao               String?                         @db.VarChar(500)
+  created_at               DateTime                        @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?                       @db.Timestamptz(6)
+  atendimentos             atendimentos                    @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  pacientes                pacientes                       @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  prestadores              prestadores                     @relation(fields: [solicitante_id], references: [id], onUpdate: NoAction)
+  solicitacoes_exame_itens solicitacoes_exame_itens[]
+
+  @@index([atendimento_id, data_solicitacao(sort: Desc)], map: "ix_sol_exame_atend")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model solicitacoes_exame_itens {
+  id                                                                              BigInt                        @id @default(autoincrement())
+  uuid_externo                                                                    String                        @unique(map: "uq_sol_exame_itens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                                                       BigInt
+  solicitacao_id                                                                  BigInt
+  procedimento_id                                                                 BigInt
+  observacao                                                                      String?                       @db.VarChar(500)
+  status                                                                          enum_solicitacao_exame_status @default(SOLICITADO)
+  resultado_id                                                                    BigInt?
+  resultados_exame_resultados_exame_solicitacao_item_idTosolicitacoes_exame_itens resultados_exame[]            @relation("resultados_exame_solicitacao_item_idTosolicitacoes_exame_itens")
+  resultados_exame_solicitacoes_exame_itens_resultado_idToresultados_exame        resultados_exame?             @relation("solicitacoes_exame_itens_resultado_idToresultados_exame", fields: [resultado_id], references: [id], onUpdate: NoAction, map: "fk_sol_item_resultado")
+  tabelas_procedimentos                                                           tabelas_procedimentos         @relation(fields: [procedimento_id], references: [id], onUpdate: NoAction)
+  solicitacoes_exame                                                              solicitacoes_exame            @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([solicitacao_id], map: "ix_sol_itens_sol")
 }
 
 enum enum_convenio_tipo {
@@ -1197,4 +1488,89 @@ enum enum_tipo_cobranca {
   PARTICULAR
   CONVENIO
   SUS
+}
+
+enum enum_analise_farmaceutica_status {
+  APROVADA
+  RECUSADA
+  APROVADA_RESSALVAS
+  PENDENTE
+}
+
+enum enum_documento_tipo {
+  ATESTADO
+  RECEITA_SIMPLES
+  RECEITA_CONTROLADO
+  DECLARACAO
+  ENCAMINHAMENTO
+  RESUMO_ALTA
+  OUTRO
+}
+
+enum enum_evolucao_tipo {
+  ANAMNESE
+  EXAME_CLINICO
+  EVOLUCAO
+  NOTA_ADMISSAO
+  NOTA_ALTA
+  PARECER
+  INTERCONSULTA
+  RESUMO_ALTA
+  RETIFICACAO
+}
+
+enum enum_evolucao_tipo_profissional {
+  MEDICO
+  ENFERMEIRO
+  TECNICO_ENFERMAGEM
+  NUTRICIONISTA
+  FISIOTERAPEUTA
+  PSICOLOGO
+  FARMACEUTICO
+  FONOAUDIOLOGO
+  TERAPEUTA_OCUPACIONAL
+  ASSISTENTE_SOCIAL
+  OUTROS
+}
+
+enum enum_interacao_severidade {
+  LEVE
+  MODERADA
+  GRAVE
+  CONTRAINDICADA
+}
+
+enum enum_prescricao_status {
+  AGUARDANDO_ANALISE
+  ATIVA
+  SUSPENSA
+  CANCELADA
+  ENCERRADA
+  RECUSADA_FARMACIA
+}
+
+enum enum_prescricao_tipo {
+  MEDICAMENTO
+  CUIDADO
+  DIETA
+  PROCEDIMENTO
+  EXAME
+  COMPOSTA
+}
+
+enum enum_solicitacao_exame_status {
+  SOLICITADO
+  AUTORIZADO
+  COLETADO
+  EM_PROCESSAMENTO
+  LAUDO_PARCIAL
+  LAUDO_FINAL
+  CANCELADO
+  NEGADO
+}
+
+enum enum_solicitacao_exame_urgencia {
+  ROTINA
+  URGENTE
+  EMERGENCIA
 }
