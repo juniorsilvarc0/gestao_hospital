@@ -22,6 +22,10 @@ import { PacienteDetailPage } from '@/pages/pacientes/PacienteDetailPage';
 import { AgendaPage } from '@/pages/agenda/AgendaPage';
 import { RecursosPage } from '@/pages/agenda/RecursosPage';
 import { PainelChamadaPage } from '@/pages/PainelChamadaPage';
+import { RecepcaoPage } from '@/pages/recepcao/RecepcaoPage';
+import { TriagemPage } from '@/pages/triagem/TriagemPage';
+import { AtendimentoDetalhePage } from '@/pages/atendimentos/AtendimentoDetalhePage';
+import { MapaLeitosPage } from '@/pages/leitos/MapaLeitosPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -68,6 +72,13 @@ export function App(): JSX.Element {
         />
         <Route path="/agenda" element={<AgendaPage />} />
         <Route path="/agenda/recursos" element={<RecursosPage />} />
+        <Route path="/recepcao" element={<RecepcaoPage />} />
+        <Route path="/triagem" element={<TriagemPage />} />
+        <Route
+          path="/atendimentos/:uuid"
+          element={<AtendimentoDetalhePage />}
+        />
+        <Route path="/leitos" element={<MapaLeitosPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

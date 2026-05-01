@@ -30,6 +30,7 @@ import {
   Bed,
   Pill,
   Activity,
+  ClipboardList,
   FileText,
   Receipt,
   ChevronDown,
@@ -54,10 +55,11 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/', label: 'Home', icon: Hospital },
   { to: '/pacientes', label: 'Pacientes', icon: Users },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
-  { to: '/leitos', label: 'Mapa de leitos', icon: Bed, comingSoon: true },
-  { to: '/pep', label: 'PEP', icon: Activity, comingSoon: true },
+  { to: '/recepcao', label: 'Recepção', icon: ClipboardList },
+  { to: '/triagem', label: 'Triagem', icon: Activity },
+  { to: '/leitos', label: 'Mapa de leitos', icon: Bed },
+  { to: '/pep', label: 'PEP', icon: FileText, comingSoon: true },
   { to: '/farmacia', label: 'Farmácia', icon: Pill, comingSoon: true },
-  { to: '/laudos', label: 'Laudos', icon: FileText, comingSoon: true },
   { to: '/faturamento', label: 'Faturamento', icon: Receipt, comingSoon: true },
 ];
 

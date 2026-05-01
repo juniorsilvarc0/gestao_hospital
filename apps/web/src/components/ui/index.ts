@@ -28,3 +28,11 @@ export {
   DialogDescription,
   DialogFooter,
 } from './dialog';
+export {
+  Sheet,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  type SheetSide,
+} from './sheet';
