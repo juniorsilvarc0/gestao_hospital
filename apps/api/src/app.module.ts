@@ -41,6 +41,7 @@ import { AgendamentoModule } from './modules/agendamento/agendamento.module';
 import { PainelChamadaModule } from './modules/painel-chamada/painel-chamada.module';
 import { MapaLeitosModule } from './modules/mapa-leitos/mapa-leitos.module';
 import { AtendimentosModule } from './modules/atendimentos/atendimentos.module';
+import { ExamesModule } from './modules/exames/exames.module';
 import { PepModule } from './modules/pep/pep.module';
 import { PrescricoesModule } from './modules/prescricoes/prescricoes.module';
 import { FarmaciaModule } from './modules/farmacia/farmacia.module';
@@ -121,6 +122,7 @@ import { LgpdModule } from './modules/lgpd/lgpd.module';
     PainelChamadaModule,
     MapaLeitosModule,
     AtendimentosModule,
+    ExamesModule,
     PepModule,
     PrescricoesModule,
     FarmaciaModule,
