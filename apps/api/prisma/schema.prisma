@@ -233,6 +233,7 @@ model centros_custo {
   created_at          DateTime        @default(now()) @db.Timestamptz(6)
   updated_at          DateTime?       @db.Timestamptz(6)
   deleted_at          DateTime?       @db.Timestamptz(6)
+  uuid_externo        String          @unique(map: "uq_centros_custo_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   centros_custo       centros_custo?  @relation("centros_custoTocentros_custo", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   other_centros_custo centros_custo[] @relation("centros_custoTocentros_custo")
   tenants             Tenant          @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -347,6 +348,7 @@ model leitos {
   created_at                                       DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at                                       DateTime?                  @db.Timestamptz(6)
   deleted_at                                       DateTime?                  @db.Timestamptz(6)
+  uuid_externo                                     String                     @unique(map: "uq_leitos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos_atendimentos_leito_idToleitos       atendimentos[]             @relation("atendimentos_leito_idToleitos")
   atendimentos_leitos_atendimento_idToatendimentos atendimentos?              @relation("leitos_atendimento_idToatendimentos", fields: [atendimento_id], references: [id], onUpdate: NoAction, map: "fk_leitos_atendimento_id")
   pacientes                                        pacientes?                 @relation(fields: [paciente_id], references: [id], onUpdate: NoAction, map: "fk_leitos_paciente_id")
@@ -552,6 +554,7 @@ model setores {
   created_at             DateTime             @default(now()) @db.Timestamptz(6)
   updated_at             DateTime?            @db.Timestamptz(6)
   deleted_at             DateTime?            @db.Timestamptz(6)
+  uuid_externo           String               @unique(map: "uq_setores_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos           atendimentos[]
   equipamentos           equipamentos[]
   leitos                 leitos[]
@@ -649,6 +652,7 @@ model unidades_atendimento {
   created_at   DateTime       @default(now()) @db.Timestamptz(6)
   updated_at   DateTime?      @db.Timestamptz(6)
   deleted_at   DateTime?      @db.Timestamptz(6)
+  uuid_externo String         @unique(map: "uq_unidades_atendimento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos atendimentos[]
   setores      setores[]
   tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -667,6 +671,7 @@ model unidades_faturamento {
   created_at   DateTime       @default(now()) @db.Timestamptz(6)
   updated_at   DateTime?      @db.Timestamptz(6)
   deleted_at   DateTime?      @db.Timestamptz(6)
+  uuid_externo String         @unique(map: "uq_unidades_faturamento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos atendimentos[]
   setores      setores[]
   tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
