@@ -26,6 +26,12 @@ import { RecepcaoPage } from '@/pages/recepcao/RecepcaoPage';
 import { TriagemPage } from '@/pages/triagem/TriagemPage';
 import { AtendimentoDetalhePage } from '@/pages/atendimentos/AtendimentoDetalhePage';
 import { MapaLeitosPage } from '@/pages/leitos/MapaLeitosPage';
+import { PepPage } from '@/pages/pep/PepPage';
+import { EvolucaoFormPage } from '@/pages/pep/EvolucaoFormPage';
+import { PrescricaoFormPage } from '@/pages/pep/PrescricaoFormPage';
+import { SinaisVitaisFormPage } from '@/pages/pep/SinaisVitaisFormPage';
+import { DocumentoFormPage } from '@/pages/pep/DocumentoFormPage';
+import { LaudosCentralPage } from '@/pages/laudos/LaudosCentralPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -79,6 +85,24 @@ export function App(): JSX.Element {
           element={<AtendimentoDetalhePage />}
         />
         <Route path="/leitos" element={<MapaLeitosPage />} />
+        <Route path="/pep/:atendimentoUuid" element={<PepPage />} />
+        <Route
+          path="/pep/:atendimentoUuid/evolucoes/nova"
+          element={<EvolucaoFormPage />}
+        />
+        <Route
+          path="/pep/:atendimentoUuid/prescricoes/nova"
+          element={<PrescricaoFormPage />}
+        />
+        <Route
+          path="/pep/:atendimentoUuid/sinais-vitais/novo"
+          element={<SinaisVitaisFormPage />}
+        />
+        <Route
+          path="/atendimentos/:uuid/documentos/novo"
+          element={<DocumentoFormPage />}
+        />
+        <Route path="/laudos" element={<LaudosCentralPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

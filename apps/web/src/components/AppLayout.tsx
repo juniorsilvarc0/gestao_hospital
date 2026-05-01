@@ -28,10 +28,10 @@ import {
   Calendar,
   Users,
   Bed,
+  Beaker,
   Pill,
   Activity,
   ClipboardList,
-  FileText,
   Receipt,
   ChevronDown,
 } from 'lucide-react';
@@ -58,10 +58,11 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/recepcao', label: 'Recepção', icon: ClipboardList },
   { to: '/triagem', label: 'Triagem', icon: Activity },
   { to: '/leitos', label: 'Mapa de leitos', icon: Bed },
-  { to: '/pep', label: 'PEP', icon: FileText, comingSoon: true },
+  { to: '/laudos', label: 'Central de Laudos', icon: Beaker },
   { to: '/farmacia', label: 'Farmácia', icon: Pill, comingSoon: true },
   { to: '/faturamento', label: 'Faturamento', icon: Receipt, comingSoon: true },
 ];
+
 
 interface UserMenuProps {
   userName: string;

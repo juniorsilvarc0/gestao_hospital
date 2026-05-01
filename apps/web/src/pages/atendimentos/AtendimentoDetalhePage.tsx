@@ -17,8 +17,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRightLeft,
   Bed,
-  Calendar,
   ClipboardList,
+  FileText,
   Loader2,
   LogOut,
   Stethoscope,
@@ -282,6 +282,15 @@ export function AtendimentoDetalhePage(): JSX.Element {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            onClick={() => navigate(`/pep/${atendimento.uuid}`)}
+          >
+            <FileText aria-hidden="true" />
+            Abrir PEP
+          </Button>
           {canTriagem ? (
             <Button
               type="button"
@@ -482,11 +491,19 @@ export function AtendimentoDetalhePage(): JSX.Element {
                 Prontuário Eletrônico
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="flex items-center gap-2 py-6 text-center text-sm text-muted-foreground">
-                <Calendar aria-hidden="true" className="h-4 w-4" />O PEP será
-                integrado na Fase 6.
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Acesse o prontuário completo (timeline, evoluções,
+                prescrições, sinais vitais e documentos) na visão dedicada
+                do PEP.
               </p>
+              <Button
+                type="button"
+                onClick={() => navigate(`/pep/${atendimento.uuid}`)}
+              >
+                <FileText aria-hidden="true" />
+                Abrir PEP
+              </Button>
             </CardContent>
           </Card>
         ) : null}

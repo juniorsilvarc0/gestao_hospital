@@ -321,6 +321,23 @@ export async function assinarLaudo(
   return unwrap(response);
 }
 
+/**
+ * Marca a coleta de uma solicitação de exame (perfil ENFERMEIRO/MÉDICO).
+ * Transiciona a solicitação para `COLETADO` (ou equivalente). Espera-se
+ * que o backend aceite POST sem body — o id da solicitação é o do laudo
+ * vinculado para o front.
+ */
+export async function marcarColetaExame(
+  solicitacaoUuid: string,
+  finalidade: FinalidadeAcesso = 'EXAME',
+): Promise<void> {
+  await apiPost<void>(
+    `/solicitacoes-exame/${solicitacaoUuid}/coleta`,
+    {},
+    withFinalidade(finalidade, { idempotent: true }),
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Header de paciente — atalho para PepPage                            */
 /* ------------------------------------------------------------------ */
