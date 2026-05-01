@@ -26,6 +26,8 @@
 import * as argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
 
+import { seedCatalogos } from '../src/modules/prescricoes/infrastructure/catalog-seed';
+
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = 'admin@hms.local';
@@ -294,6 +296,14 @@ async function main(): Promise<void> {
     });
     console.warn('[seed] usuarios_perfis admin -> ADMIN ok');
   });
+
+  // ── Catálogo de princípios ativos + interações medicamentosas (Fase 6/PEP) ──
+  // Tabelas globais (sem RLS) — pode rodar fora da transação acima.
+  // Idempotente: ON CONFLICT DO NOTHING em todos os inserts.
+  // `pnpm seed` agora também popula esse catálogo, pré-requisito dos
+  // validators de prescrição (alergia/interação/dose máxima).
+  await seedCatalogos(prisma);
+  console.warn('[seed] catalogos prescricao (principios + interacoes) ok');
 
   console.warn('[seed] Done.');
   console.warn('');
