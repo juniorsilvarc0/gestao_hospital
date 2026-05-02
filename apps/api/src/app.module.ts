@@ -47,7 +47,9 @@ import { PrescricoesModule } from './modules/prescricoes/prescricoes.module';
 import { FarmaciaModule } from './modules/farmacia/farmacia.module';
 import { CirurgiasModule } from './modules/cirurgias/cirurgias.module';
 import { CentroCirurgicoModule } from './modules/centro-cirurgico/centro-cirurgico.module';
+import { ContasModule } from './modules/contas/contas.module';
 import { FaturamentoModule } from './modules/faturamento/faturamento.module';
+import { TissModule } from './modules/tiss/tiss.module';
 import { GlosasModule } from './modules/glosas/glosas.module';
 import { RepasseModule } from './modules/repasse/repasse.module';
 import { CmeModule } from './modules/cme/cme.module';
@@ -129,7 +131,9 @@ import { LgpdModule } from './modules/lgpd/lgpd.module';
     FarmaciaModule,
     CirurgiasModule,
     CentroCirurgicoModule,
+    ContasModule,
     FaturamentoModule,
+    TissModule,
     GlosasModule,
     RepasseModule,
     CmeModule,
