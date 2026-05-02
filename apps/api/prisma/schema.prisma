@@ -91,6 +91,9 @@ model Usuario {
   glosas                                                      glosas[]
   import_jobs                                                 import_jobs[]
   mfaRecoveryCodes                                            MfaRecoveryCode[]
+  repasses_repasses_conferido_porTousuarios                   repasses[]           @relation("repasses_conferido_porTousuarios")
+  repasses_repasses_liberado_porTousuarios                    repasses[]           @relation("repasses_liberado_porTousuarios")
+  repasses_repasses_pago_porTousuarios                        repasses[]           @relation("repasses_pago_porTousuarios")
   sessoesAtivas                                               SessaoAtiva[]
   triagens                                                    triagens[]
   usuario_setores                                             usuario_setores[]
@@ -521,6 +524,7 @@ model prestadores {
   livro_controlados          livro_controlados[]
   tenants                    Tenant                       @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   prestadores_especialidades prestadores_especialidades[]
+  repasses                   repasses[]
   resultados_exame           resultados_exame[]
   solicitacoes_exame         solicitacoes_exame[]
   usuarios                   Usuario[]
@@ -679,37 +683,39 @@ model tabelas_procedimentos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model unidades_atendimento {
-  id           BigInt         @id @default(autoincrement())
-  tenant_id    BigInt
-  codigo       String         @db.VarChar(20)
-  nome         String         @db.VarChar(120)
-  ativa        Boolean        @default(true)
-  created_at   DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime?      @db.Timestamptz(6)
-  deleted_at   DateTime?      @db.Timestamptz(6)
-  uuid_externo String         @unique(map: "uq_unidades_atendimento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  atendimentos atendimentos[]
-  setores      setores[]
-  tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id                BigInt              @id @default(autoincrement())
+  tenant_id         BigInt
+  codigo            String              @db.VarChar(20)
+  nome              String              @db.VarChar(120)
+  ativa             Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?           @db.Timestamptz(6)
+  deleted_at        DateTime?           @db.Timestamptz(6)
+  uuid_externo      String              @unique(map: "uq_unidades_atendimento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  atendimentos      atendimentos[]
+  criterios_repasse criterios_repasse[]
+  setores           setores[]
+  tenants           Tenant              @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo], map: "uq_ua")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model unidades_faturamento {
-  id           BigInt         @id @default(autoincrement())
-  tenant_id    BigInt
-  codigo       String         @db.VarChar(20)
-  nome         String         @db.VarChar(120)
-  cnes         String?        @db.VarChar(20)
-  ativa        Boolean        @default(true)
-  created_at   DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime?      @db.Timestamptz(6)
-  deleted_at   DateTime?      @db.Timestamptz(6)
-  uuid_externo String         @unique(map: "uq_unidades_faturamento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  atendimentos atendimentos[]
-  setores      setores[]
-  tenants      Tenant         @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  id                BigInt              @id @default(autoincrement())
+  tenant_id         BigInt
+  codigo            String              @db.VarChar(20)
+  nome              String              @db.VarChar(120)
+  cnes              String?             @db.VarChar(20)
+  ativa             Boolean             @default(true)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?           @db.Timestamptz(6)
+  deleted_at        DateTime?           @db.Timestamptz(6)
+  uuid_externo      String              @unique(map: "uq_unidades_faturamento_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  atendimentos      atendimentos[]
+  criterios_repasse criterios_repasse[]
+  setores           setores[]
+  tenants           Tenant              @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
 
   @@unique([tenant_id, codigo], map: "uq_uf")
 }
@@ -1041,6 +1047,7 @@ model contas {
   contas_itens             contas_itens[]
   glosas                   glosas[]
   guias_tiss               guias_tiss[]
+  repasses_itens           repasses_itens[]
 
   @@unique([tenant_id, numero_conta], map: "uq_contas_numero")
 }
@@ -1440,6 +1447,7 @@ model cirurgias {
   tabelas_procedimentos     tabelas_procedimentos         @relation(fields: [procedimento_principal_id], references: [id], onUpdate: NoAction)
   salas_cirurgicas          salas_cirurgicas              @relation(fields: [sala_id], references: [id], onUpdate: NoAction)
   cirurgias_equipe          cirurgias_equipe[]
+  repasses_itens            repasses_itens[]
 
   @@index([atendimento_id], map: "ix_cir_atend")
   @@index([cirurgiao_id, data_hora_agendada(sort: Desc)], map: "ix_cir_cirurgiao")
@@ -1507,6 +1515,7 @@ model contas_itens {
   guias_tiss              guias_tiss?            @relation(fields: [guia_tiss_id], references: [id], onUpdate: NoAction, map: "fk_contas_itens_guia_tiss")
   pacotes                 pacotes?               @relation(fields: [pacote_id], references: [id], onUpdate: NoAction, map: "fk_contas_itens_pacote")
   glosas                  glosas[]
+  repasses_itens          repasses_itens[]
 
   @@index([origem, origem_referencia_id], map: "ix_ci_origem")
   @@index([procedimento_id], map: "ix_ci_proc")
@@ -1791,6 +1800,106 @@ model pacotes_itens {
 
   @@unique([pacote_id, procedimento_id], map: "uq_pi")
   @@index([pacote_id], map: "ix_pi_pacote")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model criterios_repasse {
+  id                     BigInt                         @id @default(autoincrement())
+  uuid_externo           String                         @unique(map: "uq_criterios_repasse_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id              BigInt
+  descricao              String                         @db.VarChar(200)
+  vigencia_inicio        DateTime                       @db.Date
+  vigencia_fim           DateTime?                      @db.Date
+  unidade_faturamento_id BigInt?
+  unidade_atendimento_id BigInt?
+  tipo_base_calculo      enum_repasse_tipo_base_calculo
+  momento_repasse        enum_repasse_momento
+  dia_fechamento         Int?
+  prazo_dias             Int?
+  prioridade             Int                            @default(1)
+  regras                 Json
+  ativo                  Boolean                        @default(true)
+  created_at             DateTime                       @default(now()) @db.Timestamptz(6)
+  created_by             BigInt?
+  updated_at             DateTime?                      @db.Timestamptz(6)
+  deleted_at             DateTime?                      @db.Timestamptz(6)
+  unidades_atendimento   unidades_atendimento?          @relation(fields: [unidade_atendimento_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  unidades_faturamento   unidades_faturamento?          @relation(fields: [unidade_faturamento_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  repasses_itens         repasses_itens[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model repasses {
+  id                                        BigInt              @id @default(autoincrement())
+  uuid_externo                              String              @unique(map: "uq_repasses_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                 BigInt
+  prestador_id                              BigInt
+  competencia                               String              @db.VarChar(7)
+  data_apuracao                             DateTime            @default(now()) @db.Timestamptz(6)
+  data_conferencia                          DateTime?           @db.Timestamptz(6)
+  conferido_por                             BigInt?
+  data_liberacao                            DateTime?           @db.Timestamptz(6)
+  liberado_por                              BigInt?
+  data_pagamento                            DateTime?           @db.Timestamptz(6)
+  pago_por                                  BigInt?
+  valor_bruto                               Decimal             @default(0) @db.Decimal(18, 4)
+  valor_creditos                            Decimal             @default(0) @db.Decimal(18, 4)
+  valor_debitos                             Decimal             @default(0) @db.Decimal(18, 4)
+  valor_descontos                           Decimal             @default(0) @db.Decimal(18, 4)
+  valor_impostos                            Decimal             @default(0) @db.Decimal(18, 4)
+  valor_liquido                             Decimal             @default(0) @db.Decimal(18, 4)
+  status                                    enum_repasse_status @default(APURADO)
+  cancelado_em                              DateTime?           @db.Timestamptz(6)
+  cancelado_motivo                          String?             @db.VarChar(500)
+  observacao                                String?
+  created_at                                DateTime            @default(now()) @db.Timestamptz(6)
+  created_by                                BigInt?
+  updated_at                                DateTime?           @db.Timestamptz(6)
+  usuarios_repasses_conferido_porTousuarios Usuario?            @relation("repasses_conferido_porTousuarios", fields: [conferido_por], references: [id], onUpdate: NoAction)
+  usuarios_repasses_liberado_porTousuarios  Usuario?            @relation("repasses_liberado_porTousuarios", fields: [liberado_por], references: [id], onUpdate: NoAction)
+  usuarios_repasses_pago_porTousuarios      Usuario?            @relation("repasses_pago_porTousuarios", fields: [pago_por], references: [id], onUpdate: NoAction)
+  prestadores                               prestadores         @relation(fields: [prestador_id], references: [id], onUpdate: NoAction)
+  repasses_itens                            repasses_itens[]
+
+  @@unique([tenant_id, prestador_id, competencia], map: "uq_repasse")
+  @@index([tenant_id, competencia], map: "ix_repasses_competencia")
+  @@index([prestador_id, competencia(sort: Desc)], map: "ix_repasses_prestador")
+  @@index([tenant_id, status, competencia(sort: Desc)], map: "ix_repasses_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model repasses_itens {
+  id                   BigInt             @id @default(autoincrement())
+  uuid_externo         String             @unique(map: "uq_repasses_itens_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id            BigInt
+  repasse_id           BigInt
+  conta_id             BigInt
+  conta_item_id        BigInt?
+  cirurgia_id          BigInt?
+  criterio_id          BigInt?
+  funcao               String?            @db.VarChar(40)
+  base_calculo         Decimal            @db.Decimal(18, 4)
+  percentual           Decimal?           @db.Decimal(7, 4)
+  valor_fixo           Decimal?           @db.Decimal(18, 4)
+  valor_calculado      Decimal            @db.Decimal(18, 4)
+  criterio_snapshot    Json?
+  reapurado_de_id      BigInt?
+  glosado              Boolean            @default(false)
+  observacao           String?            @db.VarChar(500)
+  created_at           DateTime           @default(now()) @db.Timestamptz(6)
+  cirurgias            cirurgias?         @relation(fields: [cirurgia_id], references: [id], onUpdate: NoAction)
+  contas               contas             @relation(fields: [conta_id], references: [id], onUpdate: NoAction)
+  contas_itens         contas_itens?      @relation(fields: [conta_item_id], references: [id], onUpdate: NoAction)
+  criterios_repasse    criterios_repasse? @relation(fields: [criterio_id], references: [id], onUpdate: NoAction)
+  repasses_itens       repasses_itens?    @relation("repasses_itensTorepasses_itens", fields: [reapurado_de_id], references: [id], onUpdate: NoAction)
+  other_repasses_itens repasses_itens[]   @relation("repasses_itensTorepasses_itens")
+  repasses             repasses           @relation(fields: [repasse_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conta_id], map: "ix_ri_conta")
+  @@index([repasse_id], map: "ix_ri_repasse")
 }
 
 enum enum_convenio_tipo {
@@ -2162,4 +2271,25 @@ enum enum_lote_tiss_status {
   ENVIADO
   PROCESSADO
   COM_ERRO
+}
+
+enum enum_repasse_momento {
+  AO_FATURAR
+  AO_CONFIRMAR_RECEBIMENTO
+  COM_PRAZO_DEFINIDO
+}
+
+enum enum_repasse_status {
+  APURADO
+  CONFERIDO
+  LIBERADO
+  PAGO
+  CANCELADO
+}
+
+enum enum_repasse_tipo_base_calculo {
+  VALOR_TOTAL
+  VALOR_COM_DEDUCOES
+  VALOR_COM_ACRESCIMOS
+  VALOR_LIQUIDO_PAGO
 }
