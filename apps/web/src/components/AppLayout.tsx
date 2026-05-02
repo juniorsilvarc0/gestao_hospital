@@ -22,11 +22,14 @@ import {
   Bell,
   BookOpen,
   BookCopy,
+  FileWarning,
+  Gauge,
   Hospital,
   KeyRound,
   LogOut,
   Package,
   Search,
+  Send,
   ShieldCheck,
   Calendar,
   Users,
@@ -37,6 +40,7 @@ import {
   Activity,
   ClipboardList,
   Receipt,
+  Upload,
   ChevronDown,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
@@ -77,14 +81,21 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: HeartPulse,
   },
   { to: '/cirurgias', label: 'Agenda de cirurgias', icon: ClipboardList },
-  // Cadastros (centro cirúrgico)
+  // Cadastros (centro cirúrgico + faturamento)
   { to: '/cadastros/kits', label: 'Kits cirúrgicos', icon: Package },
   {
     to: '/cadastros/gabaritos',
     label: 'Cadernos de gabaritos',
     icon: BookCopy,
   },
-  { to: '/faturamento', label: 'Faturamento', icon: Receipt, comingSoon: true },
+  { to: '/cadastros/pacotes', label: 'Pacotes', icon: BookCopy },
+  // Faturamento (Fase 8)
+  { to: '/contas', label: 'Contas', icon: Receipt },
+  { to: '/tiss/lotes', label: 'Lotes TISS', icon: Send },
+  // Glosas (Fase 8)
+  { to: '/glosas/dashboard', label: 'Painel de glosas', icon: Gauge },
+  { to: '/glosas', label: 'Glosas', icon: FileWarning },
+  { to: '/glosas/importar', label: 'Importar TISS (glosas)', icon: Upload },
 ];
 
 

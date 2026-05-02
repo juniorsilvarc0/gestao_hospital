@@ -40,6 +40,16 @@ import { CirurgiaDetalhePage } from '@/pages/centro-cirurgico/CirurgiaDetalhePag
 import { AgendarCirurgiaPage } from '@/pages/centro-cirurgico/AgendarCirurgiaPage';
 import { KitsCirurgicosPage } from '@/pages/cadastros/KitsCirurgicosPage';
 import { CadernosGabaritosPage } from '@/pages/cadastros/CadernosGabaritosPage';
+import { PacotesPage } from '@/pages/cadastros/PacotesPage';
+import { ContasListPage } from '@/pages/contas/ContasListPage';
+import { ContaDetalhePage } from '@/pages/contas/ContaDetalhePage';
+import { LotesTissPage } from '@/pages/tiss/LotesTissPage';
+import { LoteTissDetalhePage } from '@/pages/tiss/LoteTissDetalhePage';
+import { GlosasListPage } from '@/pages/glosas/GlosasListPage';
+import { GlosaDetalhePage } from '@/pages/glosas/GlosaDetalhePage';
+import { GlosasDashboardPage } from '@/pages/glosas/GlosasDashboardPage';
+import { ImportarGlosasTissPage } from '@/pages/glosas/ImportarGlosasTissPage';
+import { NovaGlosaPage } from '@/pages/glosas/NovaGlosaPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -134,6 +144,22 @@ export function App(): JSX.Element {
           path="/cadastros/gabaritos"
           element={<CadernosGabaritosPage />}
         />
+
+        {/* Faturamento (Fase 8) */}
+        <Route path="/cadastros/pacotes" element={<PacotesPage />} />
+        <Route path="/contas" element={<ContasListPage />} />
+        <Route path="/contas/:uuid" element={<ContaDetalhePage />} />
+
+        {/* TISS (Fase 8) */}
+        <Route path="/tiss/lotes" element={<LotesTissPage />} />
+        <Route path="/tiss/lotes/:uuid" element={<LoteTissDetalhePage />} />
+
+        {/* Glosas (Fase 8) */}
+        <Route path="/glosas" element={<GlosasListPage />} />
+        <Route path="/glosas/dashboard" element={<GlosasDashboardPage />} />
+        <Route path="/glosas/importar" element={<ImportarGlosasTissPage />} />
+        <Route path="/glosas/nova" element={<NovaGlosaPage />} />
+        <Route path="/glosas/:uuid" element={<GlosaDetalhePage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
