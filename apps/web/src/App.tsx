@@ -50,6 +50,13 @@ import { GlosaDetalhePage } from '@/pages/glosas/GlosaDetalhePage';
 import { GlosasDashboardPage } from '@/pages/glosas/GlosasDashboardPage';
 import { ImportarGlosasTissPage } from '@/pages/glosas/ImportarGlosasTissPage';
 import { NovaGlosaPage } from '@/pages/glosas/NovaGlosaPage';
+import { CriteriosListPage } from '@/pages/repasse/CriteriosListPage';
+import { CriterioFormPage } from '@/pages/repasse/CriterioFormPage';
+import { RepassesListPage } from '@/pages/repasse/RepassesListPage';
+import { RepasseDetalhePage } from '@/pages/repasse/RepasseDetalhePage';
+import { ApurarCompetenciaPage } from '@/pages/repasse/ApurarCompetenciaPage';
+import { FolhaPage } from '@/pages/repasse/FolhaPage';
+import { FolhaPrestadorPage } from '@/pages/repasse/FolhaPrestadorPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -160,6 +167,25 @@ export function App(): JSX.Element {
         <Route path="/glosas/importar" element={<ImportarGlosasTissPage />} />
         <Route path="/glosas/nova" element={<NovaGlosaPage />} />
         <Route path="/glosas/:uuid" element={<GlosaDetalhePage />} />
+
+        {/* Repasse Médico (Fase 9) */}
+        <Route path="/repasse" element={<RepassesListPage />} />
+        <Route path="/repasse/apurar" element={<ApurarCompetenciaPage />} />
+        <Route path="/repasse/criterios" element={<CriteriosListPage />} />
+        <Route
+          path="/repasse/criterios/novo"
+          element={<CriterioFormPage mode="create" />}
+        />
+        <Route
+          path="/repasse/criterios/:uuid"
+          element={<CriterioFormPage mode="edit" />}
+        />
+        <Route path="/repasse/folha" element={<FolhaPage />} />
+        <Route
+          path="/repasse/folha/:prestadorUuid"
+          element={<FolhaPrestadorPage />}
+        />
+        <Route path="/repasse/:uuid" element={<RepasseDetalhePage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

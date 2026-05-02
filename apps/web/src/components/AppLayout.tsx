@@ -22,12 +22,14 @@ import {
   Bell,
   BookOpen,
   BookCopy,
+  Calculator,
   FileWarning,
   Gauge,
   Hospital,
   KeyRound,
   LogOut,
   Package,
+  ScrollText,
   Search,
   Send,
   ShieldCheck,
@@ -96,6 +98,11 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/glosas/dashboard', label: 'Painel de glosas', icon: Gauge },
   { to: '/glosas', label: 'Glosas', icon: FileWarning },
   { to: '/glosas/importar', label: 'Importar TISS (glosas)', icon: Upload },
+  // Repasse Médico (Fase 9)
+  { to: '/repasse', label: 'Repasses', icon: Calculator },
+  { to: '/repasse/apurar', label: 'Apurar', icon: Calculator },
+  { to: '/repasse/criterios', label: 'Critérios', icon: ScrollText },
+  { to: '/repasse/folha', label: 'Folha', icon: ScrollText },
 ];
 
 
