@@ -45,6 +45,17 @@ export const QUEUE_NOTIFICACOES_CONFIRMACAO =
   QUEUE_AGENDAMENTOS_NOTIFICACAO_INDIVIDUAL;
 export const QUEUE_NO_SHOW_DETECTOR = QUEUE_AGENDAMENTOS_NO_SHOW;
 
+// Fase 9 — Trilha R-A: apuração de repasse mensal.
+//
+// `repasse-apurar` — disparada por `POST /v1/repasse/apurar`. Roda o
+//   `ApuracaoRunnerService` para a competência informada. Idempotente
+//   via uniq (tenant, prestador, competência) + `forceReapuracao`.
+//
+// jobId determinístico por (tenant, competencia, prestadorUuids?) para
+// evitar duplicatas em re-disparo. Trilha R-B estenderá com
+// `repasse-reapurar` para reagir a `glosa.recurso_resolvido`.
+export const QUEUE_REPASSE_APURAR = 'repasse-apurar';
+
 @Global()
 @Module({
   imports: [
@@ -100,6 +111,17 @@ export const QUEUE_NO_SHOW_DETECTOR = QUEUE_AGENDAMENTOS_NO_SHOW;
         backoff: { type: 'exponential', delay: 30_000 },
         removeOnComplete: 500,
         removeOnFail: 1_000,
+      },
+    }),
+    BullModule.registerQueue({
+      name: QUEUE_REPASSE_APURAR,
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 30_000 },
+        // Apuração é evento auditável e o resultado importa: mantemos
+        // mais entradas em fila para diagnóstico.
+        removeOnComplete: 200,
+        removeOnFail: 500,
       },
     }),
   ],
