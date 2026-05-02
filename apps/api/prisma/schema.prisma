@@ -88,18 +88,23 @@ model Usuario {
   atendimentos_atendimentos_created_byTousuarios              atendimentos[]       @relation("atendimentos_created_byTousuarios")
   atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]       @relation("atendimentos_deleted_byTousuarios")
   atendimentos_atendimentos_updated_byTousuarios              atendimentos[]       @relation("atendimentos_updated_byTousuarios")
+  cme_lotes                                                   cme_lotes[]
   glosas                                                      glosas[]
   import_jobs                                                 import_jobs[]
   mfaRecoveryCodes                                            MfaRecoveryCode[]
   repasses_repasses_conferido_porTousuarios                   repasses[]           @relation("repasses_conferido_porTousuarios")
   repasses_repasses_liberado_porTousuarios                    repasses[]           @relation("repasses_liberado_porTousuarios")
   repasses_repasses_pago_porTousuarios                        repasses[]           @relation("repasses_pago_porTousuarios")
+  same_emprestimos                                            same_emprestimos[]
+  same_prontuarios                                            same_prontuarios[]
   sessoesAtivas                                               SessaoAtiva[]
   triagens                                                    triagens[]
   usuario_setores                                             usuario_setores[]
   prestadores                                                 prestadores?         @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
   tenant                                                      Tenant               @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
   perfis                                                      UsuarioPerfil[]
+  visitantes                                                  visitantes[]
+  visitas                                                     visitas[]
 
   @@unique([tenantId, email], map: "uq_usuarios_email_tenant")
   @@index([tenantId], map: "ix_usuarios_tenant")
@@ -357,10 +362,12 @@ model leitos {
   deleted_at                                       DateTime?                  @db.Timestamptz(6)
   uuid_externo                                     String                     @unique(map: "uq_leitos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos_atendimentos_leito_idToleitos       atendimentos[]             @relation("atendimentos_leito_idToleitos")
+  ccih_casos                                       ccih_casos[]
   atendimentos_leitos_atendimento_idToatendimentos atendimentos?              @relation("leitos_atendimento_idToatendimentos", fields: [atendimento_id], references: [id], onUpdate: NoAction, map: "fk_leitos_atendimento_id")
   pacientes                                        pacientes?                 @relation(fields: [paciente_id], references: [id], onUpdate: NoAction, map: "fk_leitos_paciente_id")
   setores                                          setores                    @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
   tenants                                          Tenant                     @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+  visitas                                          visitas[]
 
   @@unique([tenant_id, setor_id, codigo], map: "uq_leitos_codigo")
   @@index([setor_id, status], map: "ix_leitos_setor_status")
@@ -413,7 +420,9 @@ model pacientes {
   acessos_prontuario      acessos_prontuario[]
   agendamentos            agendamentos[]
   atendimentos            atendimentos[]
+  ccih_casos              ccih_casos[]
   cirurgias               cirurgias[]
+  cme_artigos             cme_artigos[]
   contas                  contas[]
   dispensacoes            dispensacoes[]
   documentos_emitidos     documentos_emitidos[]
@@ -424,8 +433,10 @@ model pacientes {
   tenants                 Tenant                                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
   pacientes_convenios     pacientes_convenios[]
   resultados_exame        resultados_exame[]
+  same_prontuarios        same_prontuarios[]
   solicitacoes_exame      solicitacoes_exame[]
   solicitacoes_lgpd       solicitacoes_lgpd[]
+  visitas                 visitas[]
 
   @@unique([tenant_id, cns], map: "uq_pacientes_cns_tenant")
   @@unique([tenant_id, codigo], map: "uq_pacientes_codigo_tenant")
@@ -518,6 +529,8 @@ model prestadores {
   cadernos_gabaritos         cadernos_gabaritos[]
   cirurgias                  cirurgias[]
   cirurgias_equipe           cirurgias_equipe[]
+  cme_lotes                  cme_lotes[]
+  cme_movimentacoes          cme_movimentacoes[]
   contas_itens               contas_itens[]
   dispensacoes               dispensacoes[]
   documentos_emitidos        documentos_emitidos[]
@@ -581,6 +594,7 @@ model setores {
   deleted_at             DateTime?            @db.Timestamptz(6)
   uuid_externo           String               @unique(map: "uq_setores_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   atendimentos           atendimentos[]
+  ccih_casos             ccih_casos[]
   contas_itens           contas_itens[]
   dispensacoes           dispensacoes[]
   equipamentos           equipamentos[]
@@ -591,6 +605,7 @@ model setores {
   unidades_atendimento   unidades_atendimento @relation(fields: [unidade_atendimento_id], references: [id], onUpdate: NoAction)
   unidades_faturamento   unidades_faturamento @relation(fields: [unidade_faturamento_id], references: [id], onUpdate: NoAction)
   usuario_setores        usuario_setores[]
+  visitas                visitas[]
 
   @@unique([tenant_id, nome], map: "uq_setores_nome")
 }
@@ -980,6 +995,7 @@ model atendimentos {
   unidades_atendimento                                    unidades_atendimento                  @relation(fields: [unidade_atendimento_id], references: [id], onUpdate: NoAction)
   unidades_faturamento                                    unidades_faturamento                  @relation(fields: [unidade_faturamento_id], references: [id], onUpdate: NoAction)
   usuarios_atendimentos_updated_byTousuarios              Usuario?                              @relation("atendimentos_updated_byTousuarios", fields: [updated_by], references: [id], onUpdate: NoAction)
+  ccih_casos                                              ccih_casos[]
   cirurgias                                               cirurgias[]
   contas                                                  contas?
   dispensacoes                                            dispensacoes[]
@@ -987,6 +1003,7 @@ model atendimentos {
   leitos_leitos_atendimento_idToatendimentos              leitos[]                              @relation("leitos_atendimento_idToatendimentos")
   solicitacoes_exame                                      solicitacoes_exame[]
   triagens                                                triagens[]
+  visitas                                                 visitas[]
 
   @@unique([tenant_id, numero_atendimento], map: "uq_atendimentos_numero")
   @@index([prestador_id, data_hora_entrada(sort: Desc)], map: "ix_atend_prestador")
@@ -1447,6 +1464,7 @@ model cirurgias {
   tabelas_procedimentos     tabelas_procedimentos         @relation(fields: [procedimento_principal_id], references: [id], onUpdate: NoAction)
   salas_cirurgicas          salas_cirurgicas              @relation(fields: [sala_id], references: [id], onUpdate: NoAction)
   cirurgias_equipe          cirurgias_equipe[]
+  cme_artigos               cme_artigos[]
   repasses_itens            repasses_itens[]
 
   @@index([atendimento_id], map: "ix_cir_atend")
@@ -1902,6 +1920,213 @@ model repasses_itens {
   @@index([repasse_id], map: "ix_ri_repasse")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ccih_casos {
+  id                      BigInt                    @id @default(autoincrement())
+  uuid_externo            String                    @unique(map: "uq_ccih_casos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id               BigInt
+  paciente_id             BigInt
+  atendimento_id          BigInt
+  setor_id                BigInt
+  leito_id                BigInt?
+  data_diagnostico        DateTime                  @db.Date
+  topografia              String?                   @db.VarChar(80)
+  cid                     String?                   @db.VarChar(10)
+  microorganismo          String?                   @db.VarChar(120)
+  cultura_origem          String?                   @db.VarChar(80)
+  resistencia             Json?
+  origem_infeccao         enum_ccih_origem_infeccao @default(INDETERMINADA)
+  notificacao_compulsoria Boolean                   @default(false)
+  data_notificacao        DateTime?                 @db.Timestamptz(6)
+  resultado               String?                   @db.VarChar(40)
+  status                  enum_ccih_caso_status     @default(ABERTO)
+  observacao              String?
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  created_by              BigInt?
+  updated_at              DateTime?                 @db.Timestamptz(6)
+  deleted_at              DateTime?                 @db.Timestamptz(6)
+  atendimentos            atendimentos              @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  leitos                  leitos?                   @relation(fields: [leito_id], references: [id], onUpdate: NoAction)
+  pacientes               pacientes                 @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  setores                 setores                   @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+
+  @@index([paciente_id, data_diagnostico(sort: Desc)], map: "ix_ccih_paciente")
+  @@index([tenant_id, status, data_diagnostico(sort: Desc)], map: "ix_ccih_status")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cme_artigos {
+  id                  BigInt              @id @default(autoincrement())
+  uuid_externo        String              @unique(map: "uq_cme_artigos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id           BigInt
+  lote_id             BigInt
+  codigo_artigo       String              @db.VarChar(60)
+  descricao           String?             @db.VarChar(300)
+  etapa_atual         enum_cme_etapa      @default(RECEPCAO)
+  cirurgia_id         BigInt?
+  paciente_id         BigInt?
+  ultima_movimentacao DateTime            @default(now()) @db.Timestamptz(6)
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  created_by          BigInt?
+  updated_at          DateTime?           @db.Timestamptz(6)
+  cirurgias           cirurgias?          @relation(fields: [cirurgia_id], references: [id], onUpdate: NoAction)
+  cme_lotes           cme_lotes           @relation(fields: [lote_id], references: [id], onUpdate: NoAction)
+  pacientes           pacientes?          @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  cme_movimentacoes   cme_movimentacoes[]
+
+  @@index([tenant_id, etapa_atual], map: "ix_cme_artigos_etapa")
+  @@index([lote_id], map: "ix_cme_artigos_lote")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cme_lotes {
+  id                      BigInt                        @id @default(autoincrement())
+  uuid_externo            String                        @unique(map: "uq_cme_lotes_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id               BigInt
+  numero                  String                        @db.VarChar(40)
+  metodo                  enum_cme_metodo_esterilizacao
+  data_esterilizacao      DateTime                      @db.Timestamptz(6)
+  validade                DateTime                      @db.Date
+  responsavel_id          BigInt
+  indicador_biologico_url String?                       @db.VarChar(500)
+  indicador_quimico_ok    Boolean?
+  indicador_biologico_ok  Boolean?
+  data_liberacao          DateTime?                     @db.Timestamptz(6)
+  liberado_por            BigInt?
+  data_reprovacao         DateTime?                     @db.Timestamptz(6)
+  motivo_reprovacao       String?                       @db.VarChar(500)
+  status                  enum_cme_lote_status          @default(EM_PROCESSAMENTO)
+  observacao              String?
+  created_at              DateTime                      @default(now()) @db.Timestamptz(6)
+  created_by              BigInt?
+  updated_at              DateTime?                     @db.Timestamptz(6)
+  deleted_at              DateTime?                     @db.Timestamptz(6)
+  ativo                   Boolean                       @default(true)
+  cme_artigos             cme_artigos[]
+  usuarios                Usuario?                      @relation(fields: [liberado_por], references: [id], onUpdate: NoAction)
+  prestadores             prestadores                   @relation(fields: [responsavel_id], references: [id], onUpdate: NoAction)
+
+  @@unique([tenant_id, numero], map: "uq_cme_lote_numero")
+  @@index([tenant_id, status, data_esterilizacao(sort: Desc)], map: "ix_cme_lotes_status")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model cme_movimentacoes {
+  id             BigInt          @id @default(autoincrement())
+  uuid_externo   String          @unique(map: "uq_cme_movs_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id      BigInt
+  artigo_id      BigInt
+  etapa_origem   enum_cme_etapa?
+  etapa_destino  enum_cme_etapa
+  responsavel_id BigInt
+  data_hora      DateTime        @default(now()) @db.Timestamptz(6)
+  observacao     String?         @db.VarChar(500)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  cme_artigos    cme_artigos     @relation(fields: [artigo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prestadores    prestadores     @relation(fields: [responsavel_id], references: [id], onUpdate: NoAction)
+
+  @@index([artigo_id, data_hora(sort: Desc)], map: "ix_cme_movs_artigo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model same_emprestimos {
+  id                      BigInt                      @id @default(autoincrement())
+  uuid_externo            String                      @unique(map: "uq_same_emprestimos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id               BigInt
+  prontuario_id           BigInt
+  solicitante_id          BigInt
+  data_emprestimo         DateTime                    @default(now()) @db.Timestamptz(6)
+  data_devolucao_prevista DateTime                    @db.Date
+  data_devolucao_real     DateTime?                   @db.Timestamptz(6)
+  motivo                  String                      @db.VarChar(200)
+  status                  enum_same_emprestimo_status @default(ATIVO)
+  observacao              String?
+  created_at              DateTime                    @default(now()) @db.Timestamptz(6)
+  same_prontuarios        same_prontuarios            @relation(fields: [prontuario_id], references: [id], onUpdate: NoAction)
+  usuarios                Usuario                     @relation(fields: [solicitante_id], references: [id], onUpdate: NoAction)
+
+  @@index([prontuario_id, data_emprestimo(sort: Desc)], map: "ix_same_emp_prontuario")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model same_prontuarios {
+  id                 BigInt                      @id @default(autoincrement())
+  uuid_externo       String                      @unique(map: "uq_same_prontuarios_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id          BigInt
+  paciente_id        BigInt
+  numero_pasta       String                      @db.VarChar(40)
+  localizacao        String?                     @db.VarChar(200)
+  status             enum_same_prontuario_status @default(ARQUIVADO)
+  digitalizado       Boolean                     @default(false)
+  pdf_legado_url     String?                     @db.VarChar(500)
+  data_digitalizacao DateTime?                   @db.Timestamptz(6)
+  digitalizado_por   BigInt?
+  observacao         String?
+  created_at         DateTime                    @default(now()) @db.Timestamptz(6)
+  created_by         BigInt?
+  updated_at         DateTime?                   @db.Timestamptz(6)
+  same_emprestimos   same_emprestimos[]
+  usuarios           Usuario?                    @relation(fields: [digitalizado_por], references: [id], onUpdate: NoAction)
+  pacientes          pacientes                   @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+
+  @@unique([tenant_id, paciente_id], map: "uq_same_paciente")
+  @@unique([tenant_id, numero_pasta], map: "uq_same_pasta")
+  @@index([tenant_id, status], map: "ix_same_status")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model visitantes {
+  id                 BigInt    @id @default(autoincrement())
+  uuid_externo       String    @unique(map: "uq_visitantes_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id          BigInt
+  nome               String    @db.VarChar(300)
+  cpf_hash           String    @db.VarChar(64)
+  cpf_ultimos4       String?   @db.VarChar(4)
+  documento_foto_url String?   @db.VarChar(500)
+  bloqueado          Boolean   @default(false)
+  motivo_bloqueio    String?   @db.VarChar(200)
+  bloqueado_em       DateTime? @db.Timestamptz(6)
+  bloqueado_por      BigInt?
+  observacao         String?
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  created_by         BigInt?
+  updated_at         DateTime? @db.Timestamptz(6)
+  deleted_at         DateTime? @db.Timestamptz(6)
+  usuarios           Usuario?  @relation(fields: [bloqueado_por], references: [id], onUpdate: NoAction)
+  visitas            visitas[]
+
+  @@unique([tenant_id, cpf_hash], map: "uq_visitante_cpf")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model visitas {
+  id             BigInt        @id @default(autoincrement())
+  uuid_externo   String        @unique(map: "uq_visitas_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id      BigInt
+  visitante_id   BigInt
+  paciente_id    BigInt
+  atendimento_id BigInt?
+  leito_id       BigInt?
+  setor_id       BigInt?
+  data_entrada   DateTime      @default(now()) @db.Timestamptz(6)
+  data_saida     DateTime?     @db.Timestamptz(6)
+  porteiro_id    BigInt?
+  observacao     String?       @db.VarChar(500)
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  atendimentos   atendimentos? @relation(fields: [atendimento_id], references: [id], onUpdate: NoAction)
+  leitos         leitos?       @relation(fields: [leito_id], references: [id], onUpdate: NoAction)
+  pacientes      pacientes     @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+  usuarios       Usuario?      @relation(fields: [porteiro_id], references: [id], onUpdate: NoAction)
+  setores        setores?      @relation(fields: [setor_id], references: [id], onUpdate: NoAction)
+  visitantes     visitantes    @relation(fields: [visitante_id], references: [id], onUpdate: NoAction)
+
+  @@index([paciente_id, data_entrada(sort: Desc)], map: "ix_visitas_paciente")
+  @@index([visitante_id, data_entrada(sort: Desc)], map: "ix_visitas_visitante")
+}
+
 enum enum_convenio_tipo {
   CONVENIO
   SUS
@@ -2292,4 +2517,58 @@ enum enum_repasse_tipo_base_calculo {
   VALOR_COM_DEDUCOES
   VALOR_COM_ACRESCIMOS
   VALOR_LIQUIDO_PAGO
+}
+
+enum enum_ccih_caso_status {
+  ABERTO
+  EM_TRATAMENTO
+  NOTIFICADO
+  ENCERRADO
+  CANCELADO
+}
+
+enum enum_ccih_origem_infeccao {
+  COMUNITARIA
+  HOSPITALAR
+  INDETERMINADA
+}
+
+enum enum_cme_etapa {
+  RECEPCAO
+  LIMPEZA
+  PREPARO
+  ESTERILIZACAO
+  GUARDA
+  DISTRIBUICAO
+  EM_USO
+  DESCARTADO
+}
+
+enum enum_cme_lote_status {
+  EM_PROCESSAMENTO
+  AGUARDANDO_INDICADOR
+  LIBERADO
+  REPROVADO
+  EXPIRADO
+}
+
+enum enum_cme_metodo_esterilizacao {
+  AUTOCLAVE
+  OXIDO_ETILENO
+  PLASMA
+  OZONIO
+  QUIMICO_LIQUIDO
+}
+
+enum enum_same_emprestimo_status {
+  ATIVO
+  DEVOLVIDO
+  ATRASADO
+}
+
+enum enum_same_prontuario_status {
+  ARQUIVADO
+  EMPRESTADO
+  DIGITALIZADO
+  DESCARTADO
 }
