@@ -72,6 +72,66 @@ function getRedirectTo(search: string): string {
   return '/';
 }
 
+/**
+ * Decide para onde mandar o usuário após login bem-sucedido (Fase 11 R-C).
+ *
+ * Heurística:
+ *  - Se o redirect explícito mira `/portal/medico` ou `/portal/paciente`,
+ *    respeita.
+ *  - Se o usuário tem perfil PACIENTE → portal do paciente.
+ *  - Se o usuário tem perfil PRESTADOR/MEDICO **e nenhum perfil interno** →
+ *    portal do médico.
+ *  - Caso contrário (perfis administrativos/clínicos do hospital) → app
+ *    interno (`/` ou redirect).
+ *
+ * TODO(R-A/R-B): se o backend passar a expor `tipo_perfil` separado de
+ * `perfis[]` no /me ou no JWT, trocar esta heurística por leitura direta
+ * do campo. Hoje usamos a string array `perfis` que já vem no payload do
+ * /v1/auth/login.
+ */
+const INTERNAL_APP_PERFIS_FOR_REDIRECT = [
+  'ADMIN',
+  'ENFERMEIRO',
+  'FARMACEUTICO',
+  'AUDITOR',
+  'RECEPCAO',
+  'TRIAGEM',
+  'FATURAMENTO',
+  'GESTAO',
+  'SAME',
+  'CCIH',
+  'CME',
+];
+
+export function decidePostLoginPath(args: {
+  perfis: string[] | undefined;
+  desiredRedirect: string;
+}): string {
+  const perfis = args.perfis ?? [];
+  const desired = args.desiredRedirect;
+
+  if (
+    desired.startsWith('/portal/medico') ||
+    desired.startsWith('/portal/paciente')
+  ) {
+    return desired;
+  }
+
+  if (perfis.includes('PACIENTE')) {
+    return '/portal/paciente';
+  }
+
+  const isPrestador = perfis.includes('PRESTADOR') || perfis.includes('MEDICO');
+  const hasInternal = perfis.some((p) =>
+    INTERNAL_APP_PERFIS_FOR_REDIRECT.includes(p),
+  );
+  if (isPrestador && !hasInternal) {
+    return '/portal/medico';
+  }
+
+  return desired;
+}
+
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,7 +165,12 @@ export function LoginPage(): JSX.Element {
   }, [step]);
 
   if (isAuthenticated) {
-    return <Navigate to={getRedirectTo(location.search)} replace />;
+    const user = useAuthStore.getState().user;
+    const target = decidePostLoginPath({
+      perfis: user?.perfis,
+      desiredRedirect: getRedirectTo(location.search),
+    });
+    return <Navigate to={target} replace />;
   }
 
   function handleApiError(err: unknown, fallback: string): void {
@@ -170,7 +235,13 @@ export function LoginPage(): JSX.Element {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       });
-      navigate(getRedirectTo(location.search), { replace: true });
+      navigate(
+        decidePostLoginPath({
+          perfis: response.user.perfis,
+          desiredRedirect: getRedirectTo(location.search),
+        }),
+        { replace: true },
+      );
     } catch (err) {
       handleApiError(err, 'Falha ao entrar. Tente novamente.');
     }
@@ -202,7 +273,13 @@ export function LoginPage(): JSX.Element {
       });
       setMfaPending(false);
       setPendingCredentials(null);
-      navigate(getRedirectTo(location.search), { replace: true });
+      navigate(
+        decidePostLoginPath({
+          perfis: response.user.perfis,
+          desiredRedirect: getRedirectTo(location.search),
+        }),
+        { replace: true },
+      );
     } catch (err) {
       handleApiError(err, 'Falha ao validar o código MFA.');
     }

@@ -81,6 +81,26 @@ import { NovoVisitantePage } from '@/pages/visitantes/NovoVisitantePage';
 import { VisitasListPage } from '@/pages/visitantes/VisitasListPage';
 import { RegistrarVisitaPage } from '@/pages/visitantes/RegistrarVisitaPage';
 import { VisitasAtivasLeitoPage } from '@/pages/visitantes/VisitasAtivasLeitoPage';
+// Portal Médico (Fase 11)
+import { MedicoPortalLayout } from '@/components/MedicoPortalLayout';
+import { MedicoHomePage } from '@/pages/portal-medico/MedicoHomePage';
+import { MedicoAgendaPage } from '@/pages/portal-medico/MedicoAgendaPage';
+import { MedicoLaudosPendentesPage } from '@/pages/portal-medico/MedicoLaudosPendentesPage';
+import { MedicoCirurgiasPage } from '@/pages/portal-medico/MedicoCirurgiasPage';
+import { MedicoProducaoPage } from '@/pages/portal-medico/MedicoProducaoPage';
+import { MedicoRepassesPage } from '@/pages/portal-medico/MedicoRepassesPage';
+// Portal Paciente (Fase 11)
+import { PacientePortalLayout } from '@/components/PacientePortalLayout';
+import { PacienteHomePage } from '@/pages/portal-paciente/PacienteHomePage';
+import { PacienteAgendamentosPage } from '@/pages/portal-paciente/PacienteAgendamentosPage';
+import { PacienteAgendarPage } from '@/pages/portal-paciente/PacienteAgendarPage';
+import { PacienteExamesPage } from '@/pages/portal-paciente/PacienteExamesPage';
+import { PacienteResultadoExamePage } from '@/pages/portal-paciente/PacienteResultadoExamePage';
+import { PacienteReceitasPage } from '@/pages/portal-paciente/PacienteReceitasPage';
+import { PacienteTeleconsultaPage } from '@/pages/portal-paciente/PacienteTeleconsultaPage';
+import { PacienteContasPage } from '@/pages/portal-paciente/PacienteContasPage';
+import { PacienteConsentimentosPage } from '@/pages/portal-paciente/PacienteConsentimentosPage';
+import { PacienteNotificacoesPage } from '@/pages/portal-paciente/PacienteNotificacoesPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -238,6 +258,56 @@ export function App(): JSX.Element {
         <Route path="/visitas" element={<VisitasListPage />} />
         <Route path="/visitas/registrar" element={<RegistrarVisitaPage />} />
         <Route path="/visitas/leito/:leitoUuid/ativas" element={<VisitasAtivasLeitoPage />} />
+      </Route>
+
+      {/* Portal Médico (Fase 11) */}
+      <Route
+        path="/portal/medico"
+        element={
+          <ProtectedRoute>
+            <MedicoPortalLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<MedicoHomePage />} />
+        <Route path="agenda" element={<MedicoAgendaPage />} />
+        <Route
+          path="laudos-pendentes"
+          element={<MedicoLaudosPendentesPage />}
+        />
+        <Route path="cirurgias" element={<MedicoCirurgiasPage />} />
+        <Route path="producao" element={<MedicoProducaoPage />} />
+        <Route path="repasses" element={<MedicoRepassesPage />} />
+      </Route>
+
+      {/* Portal Paciente (Fase 11) */}
+      <Route
+        path="/portal/paciente"
+        element={
+          <ProtectedRoute>
+            <PacientePortalLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<PacienteHomePage />} />
+        <Route path="agendamentos" element={<PacienteAgendamentosPage />} />
+        <Route path="agendar" element={<PacienteAgendarPage />} />
+        <Route path="exames" element={<PacienteExamesPage />} />
+        <Route
+          path="exames/:uuid/resultado"
+          element={<PacienteResultadoExamePage />}
+        />
+        <Route path="receitas" element={<PacienteReceitasPage />} />
+        <Route
+          path="teleconsulta/:agendamentoUuid"
+          element={<PacienteTeleconsultaPage />}
+        />
+        <Route path="contas" element={<PacienteContasPage />} />
+        <Route
+          path="consentimentos"
+          element={<PacienteConsentimentosPage />}
+        />
+        <Route path="notificacoes" element={<PacienteNotificacoesPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
