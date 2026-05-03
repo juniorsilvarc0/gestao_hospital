@@ -60,48 +60,51 @@ model Tenant {
 }
 
 model Usuario {
-  id                                                          BigInt               @id @default(autoincrement())
-  uuidExterno                                                 String               @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
-  tenantId                                                    BigInt               @map("tenant_id")
-  email                                                       String               @db.VarChar(200)
-  senhaHash                                                   String?              @map("senha_hash") @db.VarChar(255)
-  mfaSecret                                                   String?              @map("mfa_secret") @db.VarChar(255)
-  mfaHabilitado                                               Boolean              @default(false) @map("mfa_habilitado")
-  prestadorId                                                 BigInt?              @map("prestador_id")
-  nome                                                        String               @db.VarChar(300)
-  ativo                                                       Boolean              @default(true)
-  ultimoLoginEm                                               DateTime?            @map("ultimo_login_em") @db.Timestamptz(6)
-  ultimoLoginIp                                               String?              @map("ultimo_login_ip") @db.Inet
-  tentativasLogin                                             Int                  @default(0) @map("tentativas_login")
-  bloqueadoAte                                                DateTime?            @map("bloqueado_ate") @db.Timestamptz(6)
-  precisaTrocarSenha                                          Boolean              @default(true) @map("precisa_trocar_senha")
-  createdAt                                                   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                                                   DateTime?            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                                                   DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  id                                                          BigInt                   @id @default(autoincrement())
+  uuidExterno                                                 String                   @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
+  tenantId                                                    BigInt                   @map("tenant_id")
+  email                                                       String                   @db.VarChar(200)
+  senhaHash                                                   String?                  @map("senha_hash") @db.VarChar(255)
+  mfaSecret                                                   String?                  @map("mfa_secret") @db.VarChar(255)
+  mfaHabilitado                                               Boolean                  @default(false) @map("mfa_habilitado")
+  prestadorId                                                 BigInt?                  @map("prestador_id")
+  nome                                                        String                   @db.VarChar(300)
+  ativo                                                       Boolean                  @default(true)
+  ultimoLoginEm                                               DateTime?                @map("ultimo_login_em") @db.Timestamptz(6)
+  ultimoLoginIp                                               String?                  @map("ultimo_login_ip") @db.Inet
+  tentativasLogin                                             Int                      @default(0) @map("tentativas_login")
+  bloqueadoAte                                                DateTime?                @map("bloqueado_ate") @db.Timestamptz(6)
+  precisaTrocarSenha                                          Boolean                  @default(true) @map("precisa_trocar_senha")
+  createdAt                                                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                                                   DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                                                   DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  paciente_id                                                 BigInt?
+  tipo_perfil                                                 enum_usuario_tipo_perfil @default(INTERNO)
   acessos_prontuario                                          acessos_prontuario[]
-  agendamentos_agendamentos_cancelado_porTousuarios           agendamentos[]       @relation("agendamentos_cancelado_porTousuarios")
-  agendamentos_agendamentos_checkin_porTousuarios             agendamentos[]       @relation("agendamentos_checkin_porTousuarios")
-  agendamentos_agendamentos_created_byTousuarios              agendamentos[]       @relation("agendamentos_created_byTousuarios")
-  agendamentos_agendamentos_updated_byTousuarios              agendamentos[]       @relation("agendamentos_updated_byTousuarios")
+  agendamentos_agendamentos_cancelado_porTousuarios           agendamentos[]           @relation("agendamentos_cancelado_porTousuarios")
+  agendamentos_agendamentos_checkin_porTousuarios             agendamentos[]           @relation("agendamentos_checkin_porTousuarios")
+  agendamentos_agendamentos_created_byTousuarios              agendamentos[]           @relation("agendamentos_created_byTousuarios")
+  agendamentos_agendamentos_updated_byTousuarios              agendamentos[]           @relation("agendamentos_updated_byTousuarios")
   agendas_bloqueios                                           agendas_bloqueios[]
-  atendimentos_atendimentos_classificacao_risco_porTousuarios atendimentos[]       @relation("atendimentos_classificacao_risco_porTousuarios")
-  atendimentos_atendimentos_created_byTousuarios              atendimentos[]       @relation("atendimentos_created_byTousuarios")
-  atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]       @relation("atendimentos_deleted_byTousuarios")
-  atendimentos_atendimentos_updated_byTousuarios              atendimentos[]       @relation("atendimentos_updated_byTousuarios")
+  atendimentos_atendimentos_classificacao_risco_porTousuarios atendimentos[]           @relation("atendimentos_classificacao_risco_porTousuarios")
+  atendimentos_atendimentos_created_byTousuarios              atendimentos[]           @relation("atendimentos_created_byTousuarios")
+  atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]           @relation("atendimentos_deleted_byTousuarios")
+  atendimentos_atendimentos_updated_byTousuarios              atendimentos[]           @relation("atendimentos_updated_byTousuarios")
   cme_lotes                                                   cme_lotes[]
   glosas                                                      glosas[]
   import_jobs                                                 import_jobs[]
   mfaRecoveryCodes                                            MfaRecoveryCode[]
-  repasses_repasses_conferido_porTousuarios                   repasses[]           @relation("repasses_conferido_porTousuarios")
-  repasses_repasses_liberado_porTousuarios                    repasses[]           @relation("repasses_liberado_porTousuarios")
-  repasses_repasses_pago_porTousuarios                        repasses[]           @relation("repasses_pago_porTousuarios")
+  repasses_repasses_conferido_porTousuarios                   repasses[]               @relation("repasses_conferido_porTousuarios")
+  repasses_repasses_liberado_porTousuarios                    repasses[]               @relation("repasses_liberado_porTousuarios")
+  repasses_repasses_pago_porTousuarios                        repasses[]               @relation("repasses_pago_porTousuarios")
   same_emprestimos                                            same_emprestimos[]
   same_prontuarios                                            same_prontuarios[]
   sessoesAtivas                                               SessaoAtiva[]
   triagens                                                    triagens[]
   usuario_setores                                             usuario_setores[]
-  prestadores                                                 prestadores?         @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
-  tenant                                                      Tenant               @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
+  prestadores                                                 prestadores?             @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
+  tenant                                                      Tenant                   @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
+  pacientes                                                   pacientes?               @relation(fields: [paciente_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   perfis                                                      UsuarioPerfil[]
   visitantes                                                  visitantes[]
   visitas                                                     visitas[]
@@ -423,11 +426,13 @@ model pacientes {
   ccih_casos              ccih_casos[]
   cirurgias               cirurgias[]
   cme_artigos             cme_artigos[]
+  consentimentos_lgpd     consentimentos_lgpd[]
   contas                  contas[]
   dispensacoes            dispensacoes[]
   documentos_emitidos     documentos_emitidos[]
   leitos                  leitos[]
   livro_controlados       livro_controlados[]
+  notificacoes_paciente   notificacoes_paciente[]
   pacientes               pacientes?                             @relation("pacientesTopacientes", fields: [paciente_mae_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   other_pacientes         pacientes[]                            @relation("pacientesTopacientes")
   tenants                 Tenant                                 @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
@@ -436,6 +441,7 @@ model pacientes {
   same_prontuarios        same_prontuarios[]
   solicitacoes_exame      solicitacoes_exame[]
   solicitacoes_lgpd       solicitacoes_lgpd[]
+  usuarios                Usuario[]
   visitas                 visitas[]
 
   @@unique([tenant_id, cns], map: "uq_pacientes_cns_tenant")
@@ -2127,6 +2133,80 @@ model visitas {
   @@index([visitante_id, data_entrada(sort: Desc)], map: "ix_visitas_visitante")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model consentimentos_lgpd {
+  id                BigInt                        @id @default(autoincrement())
+  uuid_externo      String                        @unique(map: "uq_consentimentos_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id         BigInt
+  paciente_id       BigInt
+  finalidade        enum_consentimento_finalidade
+  texto_apresentado String
+  versao_termo      String                        @db.VarChar(20)
+  aceito            Boolean
+  data_decisao      DateTime                      @default(now()) @db.Timestamptz(6)
+  ip_origem         String?                       @db.Inet
+  user_agent        String?                       @db.VarChar(500)
+  data_revogacao    DateTime?                     @db.Timestamptz(6)
+  motivo_revogacao  String?                       @db.VarChar(500)
+  created_at        DateTime                      @default(now()) @db.Timestamptz(6)
+  created_by        BigInt?
+  pacientes         pacientes                     @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+
+  @@unique([tenant_id, paciente_id, finalidade, versao_termo], map: "uq_consent_paciente_finalidade")
+  @@index([paciente_id, finalidade], map: "ix_consent_paciente")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notificacoes_paciente {
+  id              BigInt                  @id @default(autoincrement())
+  uuid_externo    String                  @unique(map: "uq_notificacoes_paciente_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id       BigInt
+  paciente_id     BigInt
+  canal           enum_notificacao_canal
+  destinatario    String                  @db.VarChar(200)
+  assunto         String?                 @db.VarChar(200)
+  conteudo        String
+  payload_extra   Json?
+  template_codigo String?                 @db.VarChar(80)
+  status          enum_notificacao_status @default(PENDENTE)
+  data_envio      DateTime?               @db.Timestamptz(6)
+  data_entrega    DateTime?               @db.Timestamptz(6)
+  data_leitura    DateTime?               @db.Timestamptz(6)
+  erro_mensagem   String?                 @db.VarChar(500)
+  tentativas      Int                     @default(0)
+  provider_id     String?                 @db.VarChar(120)
+  origem_evento   String?                 @db.VarChar(80)
+  created_at      DateTime                @default(now()) @db.Timestamptz(6)
+  created_by      BigInt?
+  pacientes       pacientes               @relation(fields: [paciente_id], references: [id], onUpdate: NoAction)
+
+  @@index([paciente_id, created_at(sort: Desc)], map: "ix_notif_paciente")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model webhooks_inbox {
+  id                 BigInt              @id @default(autoincrement())
+  uuid_externo       String              @unique(map: "uq_webhooks_inbox_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id          BigInt
+  origem             enum_webhook_origem
+  idempotency_key    String              @db.VarChar(120)
+  endpoint           String              @db.VarChar(200)
+  payload            Json
+  headers            Json?
+  signature          String?             @db.VarChar(500)
+  status             enum_webhook_status @default(RECEBIDO)
+  data_recebimento   DateTime            @default(now()) @db.Timestamptz(6)
+  data_processamento DateTime?           @db.Timestamptz(6)
+  tentativas         Int                 @default(0)
+  erro_mensagem      String?
+  erro_stack         String?
+  resultado          Json?
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+
+  @@unique([tenant_id, origem, idempotency_key], map: "uq_webhook_idem")
+  @@index([origem, data_recebimento(sort: Desc)], map: "ix_webhooks_origem_data")
+}
+
 enum enum_convenio_tipo {
   CONVENIO
   SUS
@@ -2571,4 +2651,50 @@ enum enum_same_prontuario_status {
   EMPRESTADO
   DIGITALIZADO
   DESCARTADO
+}
+
+enum enum_consentimento_finalidade {
+  TERMO_USO_PORTAL
+  COMPARTILHAMENTO_DADOS_CONVENIO
+  TELECONSULTA_GRAVACAO
+  PESQUISA_CIENTIFICA
+  COMUNICACAO_MARKETING
+  OUTROS
+}
+
+enum enum_notificacao_canal {
+  EMAIL
+  SMS
+  PUSH
+  WHATSAPP
+}
+
+enum enum_notificacao_status {
+  PENDENTE
+  ENVIADA
+  ENTREGUE
+  LIDA
+  FALHA
+}
+
+enum enum_usuario_tipo_perfil {
+  INTERNO
+  PRESTADOR
+  PACIENTE
+}
+
+enum enum_webhook_origem {
+  TISS_RETORNO
+  LAB_APOIO
+  FINANCEIRO
+  GATEWAY_PAGAMENTO
+  OUTROS
+}
+
+enum enum_webhook_status {
+  RECEBIDO
+  PROCESSANDO
+  PROCESSADO
+  ERRO
+  IGNORADO
 }
