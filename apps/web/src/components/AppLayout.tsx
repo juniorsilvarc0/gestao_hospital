@@ -44,6 +44,10 @@ import {
   Receipt,
   Upload,
   ChevronDown,
+  Sparkles,
+  ShieldAlert,
+  Folder,
+  UserCheck,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -103,6 +107,18 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/repasse/apurar', label: 'Apurar', icon: Calculator },
   { to: '/repasse/criterios', label: 'Critérios', icon: ScrollText },
   { to: '/repasse/folha', label: 'Folha', icon: ScrollText },
+  // CME (Fase 10)
+  { to: '/cme/lotes', label: 'CME — Lotes', icon: Sparkles },
+  { to: '/cme/artigos', label: 'CME — Artigos', icon: Sparkles },
+  // CCIH (Fase 10)
+  { to: '/ccih/painel', label: 'Painel CCIH', icon: ShieldAlert },
+  { to: '/ccih/casos', label: 'Casos CCIH', icon: ShieldAlert },
+  // SAME (Fase 10)
+  { to: '/same/prontuarios', label: 'SAME — Prontuários', icon: Folder },
+  { to: '/same/emprestimos', label: 'SAME — Empréstimos', icon: Folder },
+  // Visitantes (Fase 10)
+  { to: '/visitantes', label: 'Visitantes', icon: UserCheck },
+  { to: '/visitas', label: 'Visitas', icon: UserCheck },
 ];
 
 

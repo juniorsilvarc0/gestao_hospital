@@ -57,6 +57,30 @@ import { RepasseDetalhePage } from '@/pages/repasse/RepasseDetalhePage';
 import { ApurarCompetenciaPage } from '@/pages/repasse/ApurarCompetenciaPage';
 import { FolhaPage } from '@/pages/repasse/FolhaPage';
 import { FolhaPrestadorPage } from '@/pages/repasse/FolhaPrestadorPage';
+// CME (Fase 10)
+import { LotesCmePage } from '@/pages/cme/LotesCmePage';
+import { LoteDetalhePage } from '@/pages/cme/LoteDetalhePage';
+import { NovoLotePage } from '@/pages/cme/NovoLotePage';
+import { ArtigosListPage } from '@/pages/cme/ArtigosListPage';
+import { ArtigoDetalhePage } from '@/pages/cme/ArtigoDetalhePage';
+// CCIH (Fase 10)
+import { CasosListPage } from '@/pages/ccih/CasosListPage';
+import { CasoDetalhePage } from '@/pages/ccih/CasoDetalhePage';
+import { NovoCasoPage } from '@/pages/ccih/NovoCasoPage';
+import { PainelCcihPage } from '@/pages/ccih/PainelCcihPage';
+// SAME (Fase 10)
+import { ProntuariosListPage } from '@/pages/same/ProntuariosListPage';
+import { ProntuarioDetalhePage } from '@/pages/same/ProntuarioDetalhePage';
+import { NovoProntuarioPage } from '@/pages/same/NovoProntuarioPage';
+import { EmprestimosListPage } from '@/pages/same/EmprestimosListPage';
+import { EmprestimosAtrasadosPage } from '@/pages/same/EmprestimosAtrasadosPage';
+// Visitantes (Fase 10)
+import { VisitantesListPage } from '@/pages/visitantes/VisitantesListPage';
+import { VisitanteDetalhePage } from '@/pages/visitantes/VisitanteDetalhePage';
+import { NovoVisitantePage } from '@/pages/visitantes/NovoVisitantePage';
+import { VisitasListPage } from '@/pages/visitantes/VisitasListPage';
+import { RegistrarVisitaPage } from '@/pages/visitantes/RegistrarVisitaPage';
+import { VisitasAtivasLeitoPage } from '@/pages/visitantes/VisitasAtivasLeitoPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -186,6 +210,34 @@ export function App(): JSX.Element {
           element={<FolhaPrestadorPage />}
         />
         <Route path="/repasse/:uuid" element={<RepasseDetalhePage />} />
+
+        {/* CME (Fase 10) */}
+        <Route path="/cme/lotes" element={<LotesCmePage />} />
+        <Route path="/cme/lotes/novo" element={<NovoLotePage />} />
+        <Route path="/cme/lotes/:uuid" element={<LoteDetalhePage />} />
+        <Route path="/cme/artigos" element={<ArtigosListPage />} />
+        <Route path="/cme/artigos/:uuid" element={<ArtigoDetalhePage />} />
+
+        {/* CCIH (Fase 10) */}
+        <Route path="/ccih/painel" element={<PainelCcihPage />} />
+        <Route path="/ccih/casos" element={<CasosListPage />} />
+        <Route path="/ccih/casos/novo" element={<NovoCasoPage />} />
+        <Route path="/ccih/casos/:uuid" element={<CasoDetalhePage />} />
+
+        {/* SAME (Fase 10) */}
+        <Route path="/same/prontuarios" element={<ProntuariosListPage />} />
+        <Route path="/same/prontuarios/novo" element={<NovoProntuarioPage />} />
+        <Route path="/same/prontuarios/:uuid" element={<ProntuarioDetalhePage />} />
+        <Route path="/same/emprestimos" element={<EmprestimosListPage />} />
+        <Route path="/same/emprestimos/atrasados" element={<EmprestimosAtrasadosPage />} />
+
+        {/* Visitantes (Fase 10) */}
+        <Route path="/visitantes" element={<VisitantesListPage />} />
+        <Route path="/visitantes/novo" element={<NovoVisitantePage />} />
+        <Route path="/visitantes/:uuid" element={<VisitanteDetalhePage />} />
+        <Route path="/visitas" element={<VisitasListPage />} />
+        <Route path="/visitas/registrar" element={<RegistrarVisitaPage />} />
+        <Route path="/visitas/leito/:leitoUuid/ativas" element={<VisitasAtivasLeitoPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
