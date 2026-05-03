@@ -38,6 +38,10 @@ import { GlosasRepository } from './infrastructure/glosas.repository';
     FinalizarGlosaUseCase,
     GetDashboardUseCase,
   ],
-  exports: [GlosasRepository],
+  exports: [
+    GlosasRepository,
+    // Fase 11 R-B (Webhooks) reusa para o pipeline TISS retorno.
+    ImportarGlosasTissUseCase,
+  ],
 })
 export class GlosasModule {}

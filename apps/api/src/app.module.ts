@@ -58,6 +58,9 @@ import { SameModule } from './modules/same/same.module';
 import { VisitantesModule } from './modules/visitantes/visitantes.module';
 import { BiModule } from './modules/bi/bi.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
+import { PortalMedicoModule } from './modules/portal-medico/portal-medico.module';
+import { PortalPacienteModule } from './modules/portal-paciente/portal-paciente.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -142,6 +145,9 @@ import { LgpdModule } from './modules/lgpd/lgpd.module';
     VisitantesModule,
     BiModule,
     LgpdModule,
+    PortalMedicoModule,
+    PortalPacienteModule,
+    WebhooksModule,
   ],
   providers: [
     // Ordem importa: JwtAuthGuard popula request.user; PermissionsGuard

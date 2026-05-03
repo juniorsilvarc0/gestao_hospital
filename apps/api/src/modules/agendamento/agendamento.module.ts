@@ -53,13 +53,18 @@ import { ConfirmacaoWorker } from './infrastructure/confirmacao.worker';
 import { DailyCoService } from './infrastructure/daily-co.service';
 import { NoShowWorker } from './infrastructure/no-show.worker';
 import { NotificacaoService } from './infrastructure/notificacao.service';
-import { TeleconsultaController } from './teleconsulta.controller';
+
+// O `TeleconsultaController` foi MIGRADO para `PortalPacienteModule` na
+// Fase 11 R-B (`get-link-teleconsulta.use-case`). Lá a checagem é
+// endurecida via `PacienteContextResolver` + permission
+// `portal_paciente:teleconsulta` em vez do best-effort do legado.
+// `import { TeleconsultaController } from './teleconsulta.controller';`
+// — desligado para evitar conflito de rota com o controller novo.
 
 @Module({
   controllers: [
     AgendamentoController,
     RecursosController,
-    TeleconsultaController,
   ],
   providers: [
     // Repo + use cases — Trilha A
@@ -93,6 +98,9 @@ import { TeleconsultaController } from './teleconsulta.controller';
     AgendamentoRepository,
     NotificacaoService,
     DailyCoService,
+    // Fase 11 R-B (Portal Paciente) reusa o use case para
+    // auto-agendamento sem duplicar lógica de overbooking/teleconsulta.
+    CreateAgendamentoUseCase,
   ],
 })
 export class AgendamentoModule {}

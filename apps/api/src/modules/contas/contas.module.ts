@@ -61,6 +61,10 @@ import { PacotesRepository } from './infrastructure/pacotes.repository';
     UpdatePacoteUseCase,
     DeletePacoteUseCase,
   ],
-  exports: [ContasRepository],
+  exports: [
+    ContasRepository,
+    // Fase 11 R-B (Portal Paciente) consome o gerador de espelho.
+    GerarEspelhoUseCase,
+  ],
 })
 export class ContasModule {}

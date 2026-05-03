@@ -87,6 +87,9 @@ import { PepRepository } from './infrastructure/pep.repository';
     PdfRendererService,
     PepRepository,
     PepAcessoInterceptor,
+    // Fase 11 R-B (Portal Paciente) reusa o downloader p/ servir PDF
+    // de receitas com validação de pertinência ao paciente logado.
+    BaixarDocumentoPdfUseCase,
   ],
 })
 export class PepModule {}
