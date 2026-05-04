@@ -56,6 +56,19 @@ export const QUEUE_NO_SHOW_DETECTOR = QUEUE_AGENDAMENTOS_NO_SHOW;
 // `repasse-reapurar` para reagir a `glosa.recurso_resolvido`.
 export const QUEUE_REPASSE_APURAR = 'repasse-apurar';
 
+// Fase 12 — Trilha R-A: refresh diário das materialized views de BI.
+//
+// `bi-refresh-daily` — chama `reporting.fn_refresh_all()` que itera
+//   todas as MVs do schema `reporting` e devolve um relatório linha a
+//   linha. Hoje o job é enfileirado manualmente via admin tooling
+//   (`POST /v1/bi/refresh` faz o refresh síncrono no handler — não
+//   passa por esta fila). O processor está pronto para receber a
+//   integração com cron (TODO Phase 13: agendar 03:00 UTC).
+//
+// Idempotência: jobId baseado na data UTC do refresh — evita disparar
+// duas vezes no mesmo dia se o cron e o admin manual disputarem.
+export const QUEUE_BI_REFRESH_DAILY = 'bi-refresh-daily';
+
 @Global()
 @Module({
   imports: [
@@ -122,6 +135,18 @@ export const QUEUE_REPASSE_APURAR = 'repasse-apurar';
         // mais entradas em fila para diagnóstico.
         removeOnComplete: 200,
         removeOnFail: 500,
+      },
+    }),
+    BullModule.registerQueue({
+      name: QUEUE_BI_REFRESH_DAILY,
+      defaultJobOptions: {
+        // Refresh é caro mas reentrante — REFRESH MATERIALIZED VIEW
+        // CONCURRENTLY é seguro de re-tentar. Limitamos a 2 tentativas
+        // para não cascatear falhas de Postgres.
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 60_000 },
+        removeOnComplete: 50,
+        removeOnFail: 200,
       },
     }),
   ],
