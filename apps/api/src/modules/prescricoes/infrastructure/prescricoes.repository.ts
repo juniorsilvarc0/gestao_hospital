@@ -110,7 +110,7 @@ export class PrescricoesRepository {
     >`
       SELECT id, uuid_externo::text AS uuid_externo, nome
         FROM tabelas_procedimentos
-       WHERE uuid_externo = ANY(${uuids}::uuid[]) AND deleted_at IS NULL
+       WHERE uuid_externo = ANY(${uuids}::uuid[])
     `;
     const out = new Map<string, { id: bigint; nome: string | null }>();
     for (const r of rows) out.set(r.uuid_externo, { id: r.id, nome: r.nome });

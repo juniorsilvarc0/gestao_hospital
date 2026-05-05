@@ -316,7 +316,6 @@ export class FarmaciaRepository {
              fator_conversao::text AS fator_conversao
         FROM tabelas_procedimentos
        WHERE uuid_externo = ANY(${uuids}::uuid[])
-         AND deleted_at IS NULL
     `;
     for (const r of rows) {
       out.set(r.uuid_externo, {
@@ -374,7 +373,6 @@ export class FarmaciaRepository {
              fator_conversao::text AS fator_conversao
         FROM tabelas_procedimentos
        WHERE id = ANY(${ids}::bigint[])
-         AND deleted_at IS NULL
     `;
     for (const r of rows) {
       out.set(r.id, {

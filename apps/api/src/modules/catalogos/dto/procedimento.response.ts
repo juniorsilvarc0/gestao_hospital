@@ -1,10 +1,11 @@
 /**
  * Response shape de procedimento (TUSS/CBHPM/SUS).
- * Usa `uuid` derivado de `id` interno apenas como string — o catálogo
- * em si não carrega `uuid_externo` (não precisa, é catálogo de domínio).
+ * Inclui `uuid` (uuid_externo) — frontend e DTOs upstream (criar item de
+ * conta, cirurgia, etc) referenciam procedimentos por UUID, não por id.
  */
 export interface ProcedimentoResponse {
   id: string;
+  uuid: string;
   codigoTuss: string;
   codigoCbhpm: string | null;
   codigoAmb: string | null;

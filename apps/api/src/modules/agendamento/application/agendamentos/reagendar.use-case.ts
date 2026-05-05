@@ -78,8 +78,7 @@ export class ReagendarUseCase {
       if (dto.procedimentoUuid !== undefined) {
         const rows = await tx.$queryRaw<{ id: bigint }[]>`
           SELECT id FROM tabelas_procedimentos
-           WHERE uuid_externo = ${dto.procedimentoUuid}::uuid
-             AND deleted_at IS NULL LIMIT 1
+           WHERE uuid_externo = ${dto.procedimentoUuid}::uuid LIMIT 1
         `;
         if (rows.length === 0) {
           throw new NotFoundException({

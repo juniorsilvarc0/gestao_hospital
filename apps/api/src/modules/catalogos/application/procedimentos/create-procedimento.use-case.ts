@@ -66,7 +66,8 @@ export class CreateProcedimentoUseCase {
           ${dto.ativo ?? true}
         )
         RETURNING
-          id, codigo_tuss, codigo_cbhpm, codigo_amb, codigo_sus,
+        id, uuid_externo::text AS uuid_externo,
+        codigo_tuss, codigo_cbhpm, codigo_amb, codigo_sus,
           codigo_anvisa, codigo_ean, nome, nome_reduzido,
           tipo::text AS tipo, grupo_gasto::text AS grupo_gasto,
           tabela_tiss, unidade_medida, fator_conversao, valor_referencia,

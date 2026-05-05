@@ -8,6 +8,7 @@ import type { ProcedimentoResponse } from '../../dto/procedimento.response';
 
 export interface ProcedimentoRow {
   id: bigint;
+  uuid_externo: string;
   codigo_tuss: string;
   codigo_cbhpm: string | null;
   codigo_amb: string | null;
@@ -37,6 +38,7 @@ export interface ProcedimentoRow {
 export function presentProcedimento(p: ProcedimentoRow): ProcedimentoResponse {
   return {
     id: p.id.toString(),
+    uuid: p.uuid_externo,
     codigoTuss: p.codigo_tuss,
     codigoCbhpm: p.codigo_cbhpm,
     codigoAmb: p.codigo_amb,

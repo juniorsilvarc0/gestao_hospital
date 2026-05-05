@@ -382,7 +382,7 @@ export class ContasRepository {
     >`
       SELECT id, grupo_gasto::text AS grupo_gasto, nome
         FROM tabelas_procedimentos
-       WHERE uuid_externo = ${uuid}::uuid AND deleted_at IS NULL
+       WHERE uuid_externo = ${uuid}::uuid AND ativo = TRUE
        LIMIT 1
     `;
     if (rows.length === 0) return null;
@@ -414,7 +414,7 @@ export class ContasRepository {
              grupo_gasto::text AS grupo_gasto, nome
         FROM tabelas_procedimentos
        WHERE uuid_externo = ANY(${uuids}::uuid[])
-         AND deleted_at IS NULL
+         AND ativo = TRUE
     `;
     for (const r of rows) {
       out.set(r.uuid_externo, {

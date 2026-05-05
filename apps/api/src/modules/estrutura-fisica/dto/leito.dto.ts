@@ -116,8 +116,10 @@ export class ListLeitosQueryDto {
 
 export interface LeitoResponse {
   id: string;
+  uuid: string;
   codigo: string;
   setorId: string;
+  setorUuid: string | null;
   tipoAcomodacao: LeitoTipoAcomodacao;
   status: LeitoStatus;
   extra: boolean;

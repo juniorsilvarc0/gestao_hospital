@@ -253,7 +253,7 @@ export class AtendimentoRepository {
     >`
       SELECT id, precisa_autorizacao
         FROM tabelas_procedimentos
-       WHERE uuid_externo = ${uuid}::uuid AND deleted_at IS NULL
+       WHERE uuid_externo = ${uuid}::uuid
        LIMIT 1
     `;
     return rows.length === 0 ? null : rows[0];

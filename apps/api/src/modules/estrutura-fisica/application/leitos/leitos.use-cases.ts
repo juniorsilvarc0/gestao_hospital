@@ -45,6 +45,7 @@ import {
 
 interface LeitoRow {
   id: bigint;
+  uuid_externo: string;
   codigo: string;
   setor_id: bigint;
   tipo_acomodacao: LeitoTipoAcomodacao;
@@ -64,8 +65,10 @@ interface LeitoRow {
 function toResponse(row: LeitoRow): LeitoResponse {
   return {
     id: row.id.toString(),
+    uuid: row.uuid_externo,
     codigo: row.codigo,
     setorId: row.setor_id.toString(),
+    setorUuid: null,
     tipoAcomodacao: row.tipo_acomodacao,
     status: row.status,
     extra: row.extra,

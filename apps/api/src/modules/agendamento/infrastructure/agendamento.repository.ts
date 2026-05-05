@@ -276,7 +276,7 @@ export class AgendamentoRepository {
     const tx = this.prisma.tx();
     const rows = await tx.$queryRaw<{ id: bigint }[]>`
       SELECT id FROM tabelas_procedimentos
-       WHERE uuid_externo = ${uuid}::uuid AND deleted_at IS NULL LIMIT 1
+       WHERE uuid_externo = ${uuid}::uuid LIMIT 1
     `;
     return rows.length === 0 ? null : rows[0].id;
   }
