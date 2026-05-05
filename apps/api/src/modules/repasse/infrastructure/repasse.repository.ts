@@ -654,8 +654,9 @@ export class RepasseRepository {
               OR EXISTS (
                 SELECT 1 FROM repasses_itens ri
                   JOIN contas c ON c.id = ri.conta_id
+                  JOIN atendimentos a ON a.id = c.atendimento_id
                  WHERE ri.repasse_id = r.id
-                   AND c.unidade_faturamento_id = ${unidadeFatFilter}::bigint
+                   AND a.unidade_faturamento_id = ${unidadeFatFilter}::bigint
               )
          )
        ORDER BY r.competencia DESC, r.id DESC
@@ -673,8 +674,9 @@ export class RepasseRepository {
               OR EXISTS (
                 SELECT 1 FROM repasses_itens ri
                   JOIN contas c ON c.id = ri.conta_id
+                  JOIN atendimentos a ON a.id = c.atendimento_id
                  WHERE ri.repasse_id = r.id
-                   AND c.unidade_faturamento_id = ${unidadeFatFilter}::bigint
+                   AND a.unidade_faturamento_id = ${unidadeFatFilter}::bigint
               )
          )
     `;
@@ -1018,8 +1020,9 @@ export class RepasseRepository {
               OR EXISTS (
                 SELECT 1 FROM repasses_itens ri
                   JOIN contas c ON c.id = ri.conta_id
+                  JOIN atendimentos a ON a.id = c.atendimento_id
                  WHERE ri.repasse_id = r.id
-                   AND c.unidade_faturamento_id = ${unidadeFatFilter}::bigint
+                   AND a.unidade_faturamento_id = ${unidadeFatFilter}::bigint
               )
          )
        ORDER BY p.nome ASC, r.id ASC

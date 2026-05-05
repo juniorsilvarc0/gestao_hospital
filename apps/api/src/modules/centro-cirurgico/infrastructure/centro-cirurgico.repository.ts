@@ -192,15 +192,15 @@ export class CentroCirurgicoRepository {
     if (uuids.length === 0) return out;
     const tx = this.prisma.tx();
     const rows = await tx.$queryRaw<
-      { id: bigint; uuid_externo: string; nome_completo: string | null }[]
+      { id: bigint; uuid_externo: string; nome: string | null }[]
     >`
-      SELECT id, uuid_externo::text AS uuid_externo, nome_completo
+      SELECT id, uuid_externo::text AS uuid_externo, nome
         FROM prestadores
        WHERE uuid_externo = ANY(${uuids}::uuid[])
          AND deleted_at IS NULL
     `;
     for (const r of rows) {
-      out.set(r.uuid_externo, { id: r.id, nome: r.nome_completo });
+      out.set(r.uuid_externo, { id: r.id, nome: r.nome });
     }
     return out;
   }
@@ -767,7 +767,7 @@ export class CentroCirurgicoRepository {
              a.uuid_externo::text AS atendimento_uuid,
              c.paciente_id,
              pa.uuid_externo::text AS paciente_uuid,
-             pa.nome_completo AS paciente_nome,
+             pa.nome AS paciente_nome,
              c.procedimento_principal_id,
              tp.uuid_externo::text AS procedimento_principal_uuid,
              tp.nome AS procedimento_principal_nome,
@@ -783,7 +783,7 @@ export class CentroCirurgicoRepository {
              c.data_hora_fim,
              c.cirurgiao_id,
              pr.uuid_externo::text AS cirurgiao_uuid,
-             pr.nome_completo AS cirurgiao_nome,
+             pr.nome AS cirurgiao_nome,
              c.tipo_anestesia::text AS tipo_anestesia,
              c.classificacao_cirurgia::text AS classificacao_cirurgia,
              COALESCE(
@@ -829,7 +829,7 @@ export class CentroCirurgicoRepository {
              ce.cirurgia_id,
              ce.prestador_id,
              pr.uuid_externo::text AS prestador_uuid,
-             pr.nome_completo AS prestador_nome,
+             pr.nome AS prestador_nome,
              ce.funcao,
              ce.ordem,
              ce.conta_item_id,
@@ -873,7 +873,7 @@ export class CentroCirurgicoRepository {
              a.uuid_externo::text AS atendimento_uuid,
              c.paciente_id,
              pa.uuid_externo::text AS paciente_uuid,
-             pa.nome_completo AS paciente_nome,
+             pa.nome AS paciente_nome,
              c.procedimento_principal_id,
              tp.uuid_externo::text AS procedimento_principal_uuid,
              tp.nome AS procedimento_principal_nome,
@@ -889,7 +889,7 @@ export class CentroCirurgicoRepository {
              c.data_hora_fim,
              c.cirurgiao_id,
              pr.uuid_externo::text AS cirurgiao_uuid,
-             pr.nome_completo AS cirurgiao_nome,
+             pr.nome AS cirurgiao_nome,
              c.tipo_anestesia::text AS tipo_anestesia,
              c.classificacao_cirurgia::text AS classificacao_cirurgia,
              COALESCE(
@@ -967,7 +967,7 @@ export class CentroCirurgicoRepository {
              ce.cirurgia_id,
              ce.prestador_id,
              pr.uuid_externo::text AS prestador_uuid,
-             pr.nome_completo AS prestador_nome,
+             pr.nome AS prestador_nome,
              ce.funcao,
              ce.ordem,
              ce.conta_item_id,
@@ -1028,7 +1028,7 @@ export class CentroCirurgicoRepository {
              a.uuid_externo::text AS atendimento_uuid,
              c.paciente_id,
              pa.uuid_externo::text AS paciente_uuid,
-             pa.nome_completo AS paciente_nome,
+             pa.nome AS paciente_nome,
              c.procedimento_principal_id,
              tp.uuid_externo::text AS procedimento_principal_uuid,
              tp.nome AS procedimento_principal_nome,
@@ -1044,7 +1044,7 @@ export class CentroCirurgicoRepository {
              c.data_hora_fim,
              c.cirurgiao_id,
              pr.uuid_externo::text AS cirurgiao_uuid,
-             pr.nome_completo AS cirurgiao_nome,
+             pr.nome AS cirurgiao_nome,
              c.tipo_anestesia::text AS tipo_anestesia,
              c.classificacao_cirurgia::text AS classificacao_cirurgia,
              COALESCE(
@@ -1376,7 +1376,7 @@ export class CentroCirurgicoRepository {
              tp.nome              AS procedimento_principal_nome,
              cg.cirurgiao_id,
              pr.uuid_externo::text AS cirurgiao_uuid,
-             pr.nome_completo     AS cirurgiao_nome,
+             pr.nome     AS cirurgiao_nome,
              cg.versao, cg.ativo, cg.observacao
         FROM cadernos_gabaritos cg
         JOIN tabelas_procedimentos tp ON tp.id = cg.procedimento_principal_id
@@ -1432,7 +1432,7 @@ export class CentroCirurgicoRepository {
              tp.nome AS procedimento_principal_nome,
              cg.cirurgiao_id,
              pr.uuid_externo::text AS cirurgiao_uuid,
-             pr.nome_completo     AS cirurgiao_nome,
+             pr.nome     AS cirurgiao_nome,
              cg.versao, cg.ativo, cg.observacao
         FROM cadernos_gabaritos cg
         JOIN tabelas_procedimentos tp ON tp.id = cg.procedimento_principal_id

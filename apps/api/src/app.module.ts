@@ -62,6 +62,7 @@ import { IndicadoresAssistenciaisModule } from './modules/indicadores-assistenci
 import { IndicadoresFinanceirosModule } from './modules/indicadores-financeiros/indicadores-financeiros.module';
 import { IndicadoresOperacionaisModule } from './modules/indicadores-operacionais/indicadores-operacionais.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
+import { AuditoriaConsultaModule } from './modules/auditoria-consulta/auditoria-consulta.module';
 import { PortalMedicoModule } from './modules/portal-medico/portal-medico.module';
 import { PortalPacienteModule } from './modules/portal-paciente/portal-paciente.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
@@ -156,6 +157,7 @@ import { SecurityIcpModule } from './modules/security-icp/security-icp.module';
     IndicadoresOperacionaisModule,
     BiExportModule,
     LgpdModule,
+    AuditoriaConsultaModule,
     PortalMedicoModule,
     PortalPacienteModule,
     WebhooksModule,

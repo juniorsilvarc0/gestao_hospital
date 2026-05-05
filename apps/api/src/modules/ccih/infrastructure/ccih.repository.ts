@@ -503,7 +503,7 @@ export class CcihRepository {
         FROM atendimentos at
         JOIN setores s ON s.id = at.setor_id
        WHERE at.deleted_at IS NULL
-         AND at.tipo IN ('INTERNACAO','OBSERVACAO','URGENCIA','EMERGENCIA')
+         AND at.tipo IN ('INTERNACAO','OBSERVACAO','PRONTO_ATENDIMENTO')
          AND at.data_hora_entrada <= (${competenciaFim}::date + INTERVAL '1 day')
          AND COALESCE(at.data_hora_saida, NOW()) >= ${competenciaInicio}::timestamptz
        GROUP BY s.uuid_externo

@@ -574,7 +574,7 @@ export class FarmaciaRepository {
              ci.uuid_externo::text AS cirurgia_uuid,
              se.uuid_externo::text AS setor_destino_uuid,
              pf.uuid_externo::text AS farmaceutico_uuid,
-             do.uuid_externo::text AS dispensacao_origem_uuid
+             dorig.uuid_externo::text AS dispensacao_origem_uuid
         FROM dispensacoes d
         JOIN atendimentos a   ON a.id = d.atendimento_id
         JOIN pacientes    pa  ON pa.id = d.paciente_id
@@ -583,8 +583,8 @@ export class FarmaciaRepository {
         LEFT JOIN cirurgias ci   ON ci.id = d.cirurgia_id
         LEFT JOIN setores  se    ON se.id = d.setor_destino_id
         JOIN prestadores  pf     ON pf.id = d.farmaceutico_id
-        LEFT JOIN dispensacoes do ON do.id = d.dispensacao_origem_id
-                                 AND do.data_hora = d.dispensacao_origem_data_hora
+        LEFT JOIN dispensacoes dorig ON dorig.id = d.dispensacao_origem_id
+                                 AND dorig.data_hora = d.dispensacao_origem_data_hora
        WHERE d.uuid_externo = ${uuid}::uuid
        LIMIT 1
     `;
@@ -654,7 +654,7 @@ export class FarmaciaRepository {
              ci.uuid_externo::text AS cirurgia_uuid,
              se.uuid_externo::text AS setor_destino_uuid,
              pf.uuid_externo::text AS farmaceutico_uuid,
-             do.uuid_externo::text AS dispensacao_origem_uuid
+             dorig.uuid_externo::text AS dispensacao_origem_uuid
         FROM dispensacoes d
         JOIN atendimentos a   ON a.id = d.atendimento_id
         JOIN pacientes    pa  ON pa.id = d.paciente_id
@@ -663,8 +663,8 @@ export class FarmaciaRepository {
         LEFT JOIN cirurgias ci   ON ci.id = d.cirurgia_id
         LEFT JOIN setores  se    ON se.id = d.setor_destino_id
         JOIN prestadores  pf     ON pf.id = d.farmaceutico_id
-        LEFT JOIN dispensacoes do ON do.id = d.dispensacao_origem_id
-                                 AND do.data_hora = d.dispensacao_origem_data_hora
+        LEFT JOIN dispensacoes dorig ON dorig.id = d.dispensacao_origem_id
+                                 AND dorig.data_hora = d.dispensacao_origem_data_hora
        WHERE d.status::text = ANY(${args.statuses}::text[])
          AND (${turnoFilter}::text IS NULL OR d.turno = ${turnoFilter})
        ORDER BY d.data_hora ASC

@@ -66,9 +66,11 @@ import { RepasseRepository } from './infrastructure/repasse.repository';
     // R-A
     CriteriosController,
     ApuracaoController,
-    // R-B
-    RepassesController,
+    // R-B — FolhaController ANTES de RepassesController para evitar que
+    // o `@Get(':uuid')` em /v1/repasse capture /v1/repasse/folha (path
+    // mais específico precisa ser registrado primeiro no Nest).
     FolhaController,
+    RepassesController,
   ],
   providers: [
     RepasseRepository,
