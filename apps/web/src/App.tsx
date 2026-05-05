@@ -108,6 +108,16 @@ import { IndicadoresAssistenciaisPage } from '@/pages/bi/IndicadoresAssistenciai
 import { IndicadoresFinanceirosPage } from '@/pages/bi/IndicadoresFinanceirosPage';
 import { IndicadoresOperacionaisPage } from '@/pages/bi/IndicadoresOperacionaisPage';
 import { BiRefreshAdminPage } from '@/pages/bi/BiRefreshAdminPage';
+// Auditoria + LGPD admin + Admin global (Fase 13 R-C)
+import { EventosPage } from '@/pages/auditoria/EventosPage';
+import { AcessosProntuarioPage } from '@/pages/auditoria/AcessosProntuarioPage';
+import { SecurityEventsPage } from '@/pages/auditoria/SecurityEventsPage';
+import { SolicitacoesAdminPage } from '@/pages/lgpd-admin/SolicitacoesAdminPage';
+import { ExportsListPage } from '@/pages/lgpd-admin/ExportsListPage';
+import { ExportDetalhePage } from '@/pages/lgpd-admin/ExportDetalhePage';
+import { TenantsListPage } from '@/pages/admin-global/TenantsListPage';
+import { TenantFormPage } from '@/pages/admin-global/TenantFormPage';
+import { SecurityDashboardPage } from '@/pages/admin-global/SecurityDashboardPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -282,6 +292,28 @@ export function App(): JSX.Element {
           element={<IndicadoresOperacionaisPage />}
         />
         <Route path="/bi/refresh" element={<BiRefreshAdminPage />} />
+
+        {/* Auditoria (Fase 13) */}
+        <Route path="/auditoria/eventos" element={<EventosPage />} />
+        <Route path="/auditoria/acessos" element={<AcessosProntuarioPage />} />
+        <Route path="/auditoria/security" element={<SecurityEventsPage />} />
+
+        {/* LGPD admin (Fase 13) */}
+        <Route
+          path="/lgpd-admin/solicitacoes"
+          element={<SolicitacoesAdminPage />}
+        />
+        <Route path="/lgpd-admin/exports" element={<ExportsListPage />} />
+        <Route
+          path="/lgpd-admin/exports/:uuid"
+          element={<ExportDetalhePage />}
+        />
+
+        {/* Admin global (Fase 13) */}
+        <Route path="/admin/tenants" element={<TenantsListPage />} />
+        <Route path="/admin/tenants/novo" element={<TenantFormPage />} />
+        <Route path="/admin/tenants/:uuid" element={<TenantFormPage />} />
+        <Route path="/admin/security" element={<SecurityDashboardPage />} />
       </Route>
 
       {/* Portal Médico (Fase 11) */}

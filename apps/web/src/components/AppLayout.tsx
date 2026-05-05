@@ -23,13 +23,18 @@ import {
   Bell,
   BookOpen,
   BookCopy,
+  Building2,
   Calculator,
+  Download,
+  Eye,
   FileWarning,
   Gauge,
+  History,
   Hospital,
   KeyRound,
   LogOut,
   Package,
+  Scale,
   ScrollText,
   Search,
   Send,
@@ -66,6 +71,11 @@ interface SidebarItem {
   icon: typeof Hospital;
   /** Quando `true`, só visualmente — sem rota real ainda. */
   comingSoon?: boolean;
+  /**
+   * Lista de perfis que podem ver o item; quando ausente, todos veem.
+   * Usado para itens administrativos (LGPD admin / multi-tenant admin).
+   */
+  perfisRequiridos?: string[];
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -129,7 +139,52 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { to: '/bi/financeiro', label: 'Indicadores financeiros', icon: TrendingUp },
   { to: '/bi/operacionais', label: 'Indicadores operacionais', icon: Gauge },
   { to: '/bi/refresh', label: 'Refresh BI', icon: RefreshCcw },
+  // Auditoria + LGPD admin + Admin global (Fase 13)
+  { to: '/auditoria/eventos', label: 'Auditoria — Eventos', icon: History },
+  {
+    to: '/auditoria/acessos',
+    label: 'Acessos a prontuário',
+    icon: Eye,
+  },
+  {
+    to: '/auditoria/security',
+    label: 'Eventos de segurança',
+    icon: ShieldCheck,
+  },
+  {
+    to: '/lgpd-admin/solicitacoes',
+    label: 'LGPD — Solicitações',
+    icon: Scale,
+    perfisRequiridos: ['ADMIN', 'DPO'],
+  },
+  {
+    to: '/lgpd-admin/exports',
+    label: 'LGPD — Exports',
+    icon: Download,
+    perfisRequiridos: ['ADMIN', 'DPO'],
+  },
+  {
+    to: '/admin/tenants',
+    label: 'Admin — Tenants',
+    icon: Building2,
+    perfisRequiridos: ['ADMIN_GLOBAL'],
+  },
+  {
+    to: '/admin/security',
+    label: 'Admin — Security',
+    icon: ShieldAlert,
+    perfisRequiridos: ['ADMIN_GLOBAL'],
+  },
 ];
+
+function userCanSeeItem(
+  item: SidebarItem,
+  perfis: ReadonlyArray<string> | undefined,
+): boolean {
+  if (!item.perfisRequiridos || item.perfisRequiridos.length === 0) return true;
+  if (!perfis || perfis.length === 0) return false;
+  return item.perfisRequiridos.some((p) => perfis.includes(p));
+}
 
 
 interface UserMenuProps {
@@ -374,7 +429,9 @@ export function AppLayout({ children }: AppLayoutProps): JSX.Element {
           className="hidden w-56 shrink-0 border-r bg-muted/20 p-3 lg:block"
         >
           <nav className="space-y-1">
-            {SIDEBAR_ITEMS.map((item) => (
+            {SIDEBAR_ITEMS.filter((item) =>
+              userCanSeeItem(item, user.perfis),
+            ).map((item) => (
               <SidebarLink key={item.to} item={item} />
             ))}
           </nav>
