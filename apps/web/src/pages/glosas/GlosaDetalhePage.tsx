@@ -487,9 +487,9 @@ function FinalizarForm({
               setStatus(e.target.value as FinalizarGlosaInput['status'])
             }
           >
-            <option value="REVERTIDA">Revertida (operadora aceitou)</option>
-            <option value="ACATADA">Acatada (recurso negado)</option>
-            <option value="PERDA_DEFINITIVA">Perda definitiva</option>
+            <option key="rev" value="REVERTIDA">Revertida (operadora aceitou)</option>
+            <option key="aca" value="ACATADA">Acatada (recurso negado)</option>
+            <option key="per" value="PERDA_DEFINITIVA">Perda definitiva</option>
           </Select>
         </div>
         {status === 'REVERTIDA' ? (
