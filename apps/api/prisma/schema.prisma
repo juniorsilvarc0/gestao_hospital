@@ -60,54 +60,60 @@ model Tenant {
 }
 
 model Usuario {
-  id                                                          BigInt                   @id @default(autoincrement())
-  uuidExterno                                                 String                   @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
-  tenantId                                                    BigInt                   @map("tenant_id")
-  email                                                       String                   @db.VarChar(200)
-  senhaHash                                                   String?                  @map("senha_hash") @db.VarChar(255)
-  mfaSecret                                                   String?                  @map("mfa_secret") @db.VarChar(255)
-  mfaHabilitado                                               Boolean                  @default(false) @map("mfa_habilitado")
-  prestadorId                                                 BigInt?                  @map("prestador_id")
-  nome                                                        String                   @db.VarChar(300)
-  ativo                                                       Boolean                  @default(true)
-  ultimoLoginEm                                               DateTime?                @map("ultimo_login_em") @db.Timestamptz(6)
-  ultimoLoginIp                                               String?                  @map("ultimo_login_ip") @db.Inet
-  tentativasLogin                                             Int                      @default(0) @map("tentativas_login")
-  bloqueadoAte                                                DateTime?                @map("bloqueado_ate") @db.Timestamptz(6)
-  precisaTrocarSenha                                          Boolean                  @default(true) @map("precisa_trocar_senha")
-  createdAt                                                   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                                                   DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt                                                   DateTime?                @map("deleted_at") @db.Timestamptz(6)
-  paciente_id                                                 BigInt?
-  tipo_perfil                                                 enum_usuario_tipo_perfil @default(INTERNO)
-  acessos_prontuario                                          acessos_prontuario[]
-  agendamentos_agendamentos_cancelado_porTousuarios           agendamentos[]           @relation("agendamentos_cancelado_porTousuarios")
-  agendamentos_agendamentos_checkin_porTousuarios             agendamentos[]           @relation("agendamentos_checkin_porTousuarios")
-  agendamentos_agendamentos_created_byTousuarios              agendamentos[]           @relation("agendamentos_created_byTousuarios")
-  agendamentos_agendamentos_updated_byTousuarios              agendamentos[]           @relation("agendamentos_updated_byTousuarios")
-  agendas_bloqueios                                           agendas_bloqueios[]
-  atendimentos_atendimentos_classificacao_risco_porTousuarios atendimentos[]           @relation("atendimentos_classificacao_risco_porTousuarios")
-  atendimentos_atendimentos_created_byTousuarios              atendimentos[]           @relation("atendimentos_created_byTousuarios")
-  atendimentos_atendimentos_deleted_byTousuarios              atendimentos[]           @relation("atendimentos_deleted_byTousuarios")
-  atendimentos_atendimentos_updated_byTousuarios              atendimentos[]           @relation("atendimentos_updated_byTousuarios")
-  cme_lotes                                                   cme_lotes[]
-  glosas                                                      glosas[]
-  import_jobs                                                 import_jobs[]
-  mfaRecoveryCodes                                            MfaRecoveryCode[]
-  repasses_repasses_conferido_porTousuarios                   repasses[]               @relation("repasses_conferido_porTousuarios")
-  repasses_repasses_liberado_porTousuarios                    repasses[]               @relation("repasses_liberado_porTousuarios")
-  repasses_repasses_pago_porTousuarios                        repasses[]               @relation("repasses_pago_porTousuarios")
-  same_emprestimos                                            same_emprestimos[]
-  same_prontuarios                                            same_prontuarios[]
-  sessoesAtivas                                               SessaoAtiva[]
-  triagens                                                    triagens[]
-  usuario_setores                                             usuario_setores[]
-  prestadores                                                 prestadores?             @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
-  tenant                                                      Tenant                   @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
-  pacientes                                                   pacientes?               @relation(fields: [paciente_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  perfis                                                      UsuarioPerfil[]
-  visitantes                                                  visitantes[]
-  visitas                                                     visitas[]
+  id                                                                    BigInt                   @id @default(autoincrement())
+  uuidExterno                                                           String                   @default(dbgenerated("uuid_generate_v4()")) @map("uuid_externo") @db.Uuid
+  tenantId                                                              BigInt                   @map("tenant_id")
+  email                                                                 String                   @db.VarChar(200)
+  senhaHash                                                             String?                  @map("senha_hash") @db.VarChar(255)
+  mfaSecret                                                             String?                  @map("mfa_secret") @db.VarChar(255)
+  mfaHabilitado                                                         Boolean                  @default(false) @map("mfa_habilitado")
+  prestadorId                                                           BigInt?                  @map("prestador_id")
+  nome                                                                  String                   @db.VarChar(300)
+  ativo                                                                 Boolean                  @default(true)
+  ultimoLoginEm                                                         DateTime?                @map("ultimo_login_em") @db.Timestamptz(6)
+  ultimoLoginIp                                                         String?                  @map("ultimo_login_ip") @db.Inet
+  tentativasLogin                                                       Int                      @default(0) @map("tentativas_login")
+  bloqueadoAte                                                          DateTime?                @map("bloqueado_ate") @db.Timestamptz(6)
+  precisaTrocarSenha                                                    Boolean                  @default(true) @map("precisa_trocar_senha")
+  createdAt                                                             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                                                             DateTime?                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                                                             DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  paciente_id                                                           BigInt?
+  tipo_perfil                                                           enum_usuario_tipo_perfil @default(INTERNO)
+  acessos_prontuario                                                    acessos_prontuario[]
+  agendamentos_agendamentos_cancelado_porTousuarios                     agendamentos[]           @relation("agendamentos_cancelado_porTousuarios")
+  agendamentos_agendamentos_checkin_porTousuarios                       agendamentos[]           @relation("agendamentos_checkin_porTousuarios")
+  agendamentos_agendamentos_created_byTousuarios                        agendamentos[]           @relation("agendamentos_created_byTousuarios")
+  agendamentos_agendamentos_updated_byTousuarios                        agendamentos[]           @relation("agendamentos_updated_byTousuarios")
+  agendas_bloqueios                                                     agendas_bloqueios[]
+  atendimentos_atendimentos_classificacao_risco_porTousuarios           atendimentos[]           @relation("atendimentos_classificacao_risco_porTousuarios")
+  atendimentos_atendimentos_created_byTousuarios                        atendimentos[]           @relation("atendimentos_created_byTousuarios")
+  atendimentos_atendimentos_deleted_byTousuarios                        atendimentos[]           @relation("atendimentos_deleted_byTousuarios")
+  atendimentos_atendimentos_updated_byTousuarios                        atendimentos[]           @relation("atendimentos_updated_byTousuarios")
+  audit_security_events_audit_security_events_alvo_usuario_idTousuarios audit_security_events[]  @relation("audit_security_events_alvo_usuario_idTousuarios")
+  audit_security_events_audit_security_events_usuario_idTousuarios      audit_security_events[]  @relation("audit_security_events_usuario_idTousuarios")
+  cme_lotes                                                             cme_lotes[]
+  glosas                                                                glosas[]
+  import_jobs                                                           import_jobs[]
+  lgpd_exports_lgpd_exports_aprovado_dpo_porTousuarios                  lgpd_exports[]           @relation("lgpd_exports_aprovado_dpo_porTousuarios")
+  lgpd_exports_lgpd_exports_aprovado_supervisor_porTousuarios           lgpd_exports[]           @relation("lgpd_exports_aprovado_supervisor_porTousuarios")
+  lgpd_exports_lgpd_exports_rejeitado_porTousuarios                     lgpd_exports[]           @relation("lgpd_exports_rejeitado_porTousuarios")
+  lgpd_exports_lgpd_exports_solicitado_porTousuarios                    lgpd_exports[]           @relation("lgpd_exports_solicitado_porTousuarios")
+  mfaRecoveryCodes                                                      MfaRecoveryCode[]
+  repasses_repasses_conferido_porTousuarios                             repasses[]               @relation("repasses_conferido_porTousuarios")
+  repasses_repasses_liberado_porTousuarios                              repasses[]               @relation("repasses_liberado_porTousuarios")
+  repasses_repasses_pago_porTousuarios                                  repasses[]               @relation("repasses_pago_porTousuarios")
+  same_emprestimos                                                      same_emprestimos[]
+  same_prontuarios                                                      same_prontuarios[]
+  sessoesAtivas                                                         SessaoAtiva[]
+  triagens                                                              triagens[]
+  usuario_setores                                                       usuario_setores[]
+  prestadores                                                           prestadores?             @relation(fields: [prestadorId], references: [id], onUpdate: NoAction, map: "fk_usuarios_prestador_id")
+  tenant                                                                Tenant                   @relation(fields: [tenantId], references: [id], map: "fk_usuarios_tenant_id")
+  pacientes                                                             pacientes?               @relation(fields: [paciente_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  perfis                                                                UsuarioPerfil[]
+  visitantes                                                            visitantes[]
+  visitas                                                               visitas[]
 
   @@unique([tenantId, email], map: "uq_usuarios_email_tenant")
   @@index([tenantId], map: "ix_usuarios_tenant")
@@ -232,6 +238,7 @@ model auditoria_eventos {
   @@index([correlation_id], map: "ix_audit_correlation")
   @@index([tenant_id, tabela, registro_id], map: "ix_audit_tenant_tabela_registro")
   @@index([usuario_id, created_at(sort: Desc)], map: "ix_audit_usuario")
+  @@index([tabela, finalidade, created_at(sort: Desc)], map: "ix_auditoria_tabela_finalidade")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -431,6 +438,7 @@ model pacientes {
   dispensacoes            dispensacoes[]
   documentos_emitidos     documentos_emitidos[]
   leitos                  leitos[]
+  lgpd_exports            lgpd_exports[]
   livro_controlados       livro_controlados[]
   notificacoes_paciente   notificacoes_paciente[]
   pacientes               pacientes?                             @relation("pacientesTopacientes", fields: [paciente_mae_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -1891,6 +1899,7 @@ model repasses {
   @@index([tenant_id, competencia], map: "ix_repasses_competencia")
   @@index([prestador_id, competencia(sort: Desc)], map: "ix_repasses_prestador")
   @@index([tenant_id, status, competencia(sort: Desc)], map: "ix_repasses_status")
+  @@index([competencia, status, valor_liquido(sort: Desc)], map: "ix_repasses_comp_status")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -2205,6 +2214,65 @@ model webhooks_inbox {
 
   @@unique([tenant_id, origem, idempotency_key], map: "uq_webhook_idem")
   @@index([origem, data_recebimento(sort: Desc)], map: "ix_webhooks_origem_data")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model audit_security_events {
+  id                                                       BigInt                         @id @default(autoincrement())
+  uuid_externo                                             String                         @unique(map: "uq_audit_security_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                                BigInt?
+  tipo                                                     enum_security_event_tipo
+  severidade                                               enum_security_event_severidade @default(WARNING)
+  usuario_id                                               BigInt?
+  alvo_usuario_id                                          BigInt?
+  ip_origem                                                String?                        @db.Inet
+  user_agent                                               String?                        @db.VarChar(500)
+  request_path                                             String?                        @db.VarChar(300)
+  request_method                                           String?                        @db.VarChar(10)
+  detalhes                                                 Json
+  created_at                                               DateTime                       @default(now()) @db.Timestamptz(6)
+  usuarios_audit_security_events_alvo_usuario_idTousuarios Usuario?                       @relation("audit_security_events_alvo_usuario_idTousuarios", fields: [alvo_usuario_id], references: [id], onUpdate: NoAction)
+  usuarios_audit_security_events_usuario_idTousuarios      Usuario?                       @relation("audit_security_events_usuario_idTousuarios", fields: [usuario_id], references: [id], onUpdate: NoAction)
+
+  @@index([tenant_id, created_at(sort: Desc)], map: "ix_audit_sec_tenant_data")
+  @@index([tipo, created_at(sort: Desc)], map: "ix_audit_sec_tipo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model lgpd_exports {
+  id                                                      BigInt                   @id @default(autoincrement())
+  uuid_externo                                            String                   @unique(map: "uq_lgpd_exports_uuid") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tenant_id                                               BigInt
+  paciente_id                                             BigInt?
+  solicitacao_lgpd_id                                     BigInt?
+  formato                                                 enum_lgpd_export_formato @default(FHIR_JSON)
+  status                                                  enum_lgpd_export_status  @default(AGUARDANDO_APROVACAO_DPO)
+  solicitado_por                                          BigInt
+  data_solicitacao                                        DateTime                 @default(now()) @db.Timestamptz(6)
+  motivo_solicitacao                                      String
+  aprovado_dpo_por                                        BigInt?
+  data_aprovacao_dpo                                      DateTime?                @db.Timestamptz(6)
+  aprovado_supervisor_por                                 BigInt?
+  data_aprovacao_sup                                      DateTime?                @db.Timestamptz(6)
+  rejeitado_por                                           BigInt?
+  data_rejeicao                                           DateTime?                @db.Timestamptz(6)
+  motivo_rejeicao                                         String?                  @db.VarChar(500)
+  data_geracao                                            DateTime?                @db.Timestamptz(6)
+  arquivo_url                                             String?                  @db.VarChar(500)
+  arquivo_hash_sha256                                     String?                  @db.VarChar(64)
+  data_expiracao                                          DateTime?                @db.Timestamptz(6)
+  data_download                                           DateTime?                @db.Timestamptz(6)
+  ip_download                                             String?                  @db.Inet
+  created_at                                              DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at                                              DateTime?                @db.Timestamptz(6)
+  usuarios_lgpd_exports_aprovado_dpo_porTousuarios        Usuario?                 @relation("lgpd_exports_aprovado_dpo_porTousuarios", fields: [aprovado_dpo_por], references: [id], onUpdate: NoAction)
+  usuarios_lgpd_exports_aprovado_supervisor_porTousuarios Usuario?                 @relation("lgpd_exports_aprovado_supervisor_porTousuarios", fields: [aprovado_supervisor_por], references: [id], onUpdate: NoAction)
+  pacientes                                               pacientes?               @relation(fields: [paciente_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  usuarios_lgpd_exports_rejeitado_porTousuarios           Usuario?                 @relation("lgpd_exports_rejeitado_porTousuarios", fields: [rejeitado_por], references: [id], onUpdate: NoAction)
+  usuarios_lgpd_exports_solicitado_porTousuarios          Usuario                  @relation("lgpd_exports_solicitado_porTousuarios", fields: [solicitado_por], references: [id], onUpdate: NoAction)
+
+  @@index([tenant_id, status, data_solicitacao(sort: Desc)], map: "ix_lgpd_exports_status")
 }
 
 enum enum_convenio_tipo {
@@ -2697,4 +2765,38 @@ enum enum_webhook_status {
   PROCESSADO
   ERRO
   IGNORADO
+}
+
+enum enum_lgpd_export_formato {
+  FHIR_JSON
+  JSON_RAW
+}
+
+enum enum_lgpd_export_status {
+  AGUARDANDO_APROVACAO_DPO
+  AGUARDANDO_APROVACAO_SUPERVISOR
+  APROVADO
+  GERANDO
+  PRONTO_PARA_DOWNLOAD
+  BAIXADO
+  EXPIRADO
+  REJEITADO
+}
+
+enum enum_security_event_severidade {
+  INFO
+  WARNING
+  ALERTA
+  CRITICO
+}
+
+enum enum_security_event_tipo {
+  TENANT_VIOLATION
+  PERFIL_ALTERADO
+  BLOQUEIO_TEMPORARIO
+  BLOQUEIO_DEFINITIVO
+  CERTIFICADO_INVALIDO
+  EXPORT_MASSA_TENTATIVA
+  TOKEN_REUSO_DETECTADO
+  OUTROS
 }
