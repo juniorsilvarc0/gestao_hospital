@@ -57,6 +57,10 @@ import { CcihModule } from './modules/ccih/ccih.module';
 import { SameModule } from './modules/same/same.module';
 import { VisitantesModule } from './modules/visitantes/visitantes.module';
 import { BiModule } from './modules/bi/bi.module';
+import { BiExportModule } from './modules/bi-export/bi-export.module';
+import { IndicadoresAssistenciaisModule } from './modules/indicadores-assistenciais/indicadores-assistenciais.module';
+import { IndicadoresFinanceirosModule } from './modules/indicadores-financeiros/indicadores-financeiros.module';
+import { IndicadoresOperacionaisModule } from './modules/indicadores-operacionais/indicadores-operacionais.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { PortalMedicoModule } from './modules/portal-medico/portal-medico.module';
 import { PortalPacienteModule } from './modules/portal-paciente/portal-paciente.module';
@@ -144,6 +148,10 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     SameModule,
     VisitantesModule,
     BiModule,
+    IndicadoresAssistenciaisModule,
+    IndicadoresFinanceirosModule,
+    IndicadoresOperacionaisModule,
+    BiExportModule,
     LgpdModule,
     PortalMedicoModule,
     PortalPacienteModule,

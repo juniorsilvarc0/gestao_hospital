@@ -64,3 +64,87 @@ export interface ListRefreshLogResponse {
     totalPages: number;
   };
 }
+
+// ────────── Dashboards (cross-domain) ──────────
+
+/**
+ * Metadata padrão de "atualização" anexada a respostas de BI baseadas em
+ * materialized views. `ultimaAtualizacaoUtc` é null quando ainda não houve
+ * REFRESH bem-sucedido para a MV.
+ */
+export interface DashboardAtualizacaoMeta {
+  ultimaAtualizacaoUtc: string | null;
+  fonteRefreshUuid: string | null;
+}
+
+export interface DashboardExecutivoResumo {
+  competencia: string;
+  pacientesAtendidos: number;
+  cirurgiasRealizadas: number;
+  taxaOcupacaoPct: string | null;
+  permanenciaMediaDias: string | null;
+  mortalidadePct: string | null;
+  iras: {
+    totalCasos: number;
+    taxaPor1000PacienteDias: string | null;
+  };
+  faturamento: {
+    bruto: string | null;
+    liquido: string | null;
+    glosaPct: string | null;
+  };
+  repasseTotal: string | null;
+  noShowPct: string | null;
+}
+
+export interface DashboardExecutivoTendenciaItem {
+  competencia: string;
+  ocupacaoPct: string | null;
+  faturamentoBruto: string | null;
+  glosaPct: string | null;
+  mortalidadePct: string | null;
+}
+
+export interface DashboardExecutivoResponse {
+  filtros: { competencia: string };
+  atualizacao: DashboardAtualizacaoMeta;
+  resumo: DashboardExecutivoResumo;
+  tendencias: DashboardExecutivoTendenciaItem[];
+}
+
+export interface DashboardOperacionalLeitos {
+  ocupados: number;
+  disponiveis: number;
+  higienizacao: number;
+  manutencao: number;
+  total: number;
+  taxaOcupacaoPct: string | null;
+}
+
+export interface DashboardOperacionalAgendamentos {
+  total: number;
+  noShow: number;
+  realizados: number;
+  noShowPct: string | null;
+}
+
+export interface DashboardOperacionalCirurgias {
+  qtdAgendadas: number;
+  qtdConcluidas: number;
+  qtdCanceladas: number;
+  duracaoMediaMin: string | null;
+}
+
+export interface DashboardOperacionalFila {
+  total: number;
+  distribuicao: Array<{ classe: string; qtd: number }>;
+}
+
+export interface DashboardOperacionalResponse {
+  filtros: { dataInicio: string; dataFim: string };
+  atualizacao: DashboardAtualizacaoMeta;
+  leitos: DashboardOperacionalLeitos;
+  agendamentos: DashboardOperacionalAgendamentos;
+  cirurgias: DashboardOperacionalCirurgias;
+  fila: DashboardOperacionalFila;
+}
