@@ -27,8 +27,21 @@ export function postLogout(): Promise<void> {
 }
 
 /** GET /v1/users/me — dados do usuário autenticado. */
-export function getCurrentUser(): Promise<AuthenticatedUser> {
-  return apiGet<AuthenticatedUser>('/users/me');
+export async function getCurrentUser(): Promise<AuthenticatedUser> {
+  const response = await apiGet<{ data: AuthenticatedUser } | AuthenticatedUser>(
+    '/users/me',
+  );
+  // Backend responde envelopado `{data: {...}}`; tolerante a ambos os formatos.
+  if (
+    response !== null &&
+    typeof response === 'object' &&
+    'data' in response &&
+    response.data !== null &&
+    typeof (response as { data: unknown }).data === 'object'
+  ) {
+    return (response as { data: AuthenticatedUser }).data;
+  }
+  return response as AuthenticatedUser;
 }
 
 /** POST /v1/auth/password/change. */

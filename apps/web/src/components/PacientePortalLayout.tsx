@@ -111,7 +111,8 @@ function UserMenu({
     };
   }, [open]);
 
-  const initials = userName
+  const safeName = userName ?? '';
+  const initials = safeName
     .split(/\s+/u)
     .filter(Boolean)
     .slice(0, 2)
