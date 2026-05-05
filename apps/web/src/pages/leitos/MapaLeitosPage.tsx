@@ -247,7 +247,7 @@ export function MapaLeitosPage(): JSX.Element {
               value={setorUuid}
               onChange={(event) => setSetorUuid(event.target.value)}
             >
-              <option value="">Todos</option>
+              <option key="__empty__" value="">Todos</option>
               {(setoresQuery.data ?? []).map((s) => (
                 <option key={s.uuid} value={s.uuid}>
                   {s.nome}

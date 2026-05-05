@@ -311,7 +311,7 @@ function GlosasTab(): JSX.Element {
               onChange={(e) => setStatus(e.target.value)}
               className="w-40"
             >
-              <option value="">Todos</option>
+              <option key="__empty__" value="">Todos</option>
               <option value="RECEBIDA">Recebida</option>
               <option value="EM_RECURSO">Em recurso</option>
               <option value="REVERTIDA">Revertida</option>

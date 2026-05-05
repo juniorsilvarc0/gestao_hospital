@@ -697,7 +697,7 @@ function ReapuracaoTab({
             onChange={(e) => setContaUuid(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="">— selecione —</option>
+            <option key="__empty__" value="">— selecione —</option>
             {contasUnicas.map(([uuid, numero]) => (
               <option key={uuid} value={uuid}>
                 {numero} ({uuid})

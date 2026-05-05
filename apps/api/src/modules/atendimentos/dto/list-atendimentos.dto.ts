@@ -74,6 +74,20 @@ export class ListAtendimentosQueryDto {
   @IsOptional()
   @IsString()
   rangeFim?: string;
+
+  /**
+   * Filtro shortcut: dia específico YYYY-MM-DD. Equivale a
+   * rangeInicio = `<data>T00:00:00Z` e rangeFim = `<data+1 day>T00:00:00Z`.
+   * Frontend usa isso na página da Recepção (lista do dia).
+   */
+  @IsOptional()
+  @IsString()
+  data?: string;
+
+  /** Busca textual (paciente / número de atendimento). */
+  @IsOptional()
+  @IsString()
+  q?: string;
 }
 
 export class ListFilaQueryDto {

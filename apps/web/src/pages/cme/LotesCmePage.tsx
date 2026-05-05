@@ -165,7 +165,7 @@ export function LotesCmePage(): JSX.Element {
                   setPage(1);
                 }}
               >
-                <option value="">— todos —</option>
+                <option key="__empty__" value="">— todos —</option>
                 {METODOS_ESTERILIZACAO.map((m) => (
                   <option key={m} value={m}>
                     {METODO_ESTERILIZACAO_LABEL[m]}

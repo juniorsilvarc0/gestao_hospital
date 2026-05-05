@@ -66,7 +66,7 @@ export function AlergiasField({
                 id={`alergias.${idx}.gravidade`}
                 {...register(`alergias.${idx}.gravidade` as const)}
               >
-                <option value="">--</option>
+                <option key="__empty__" value="">--</option>
                 <option value="LEVE">Leve</option>
                 <option value="MODERADA">Moderada</option>
                 <option value="GRAVE">Grave</option>

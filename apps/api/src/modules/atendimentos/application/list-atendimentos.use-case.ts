@@ -52,6 +52,19 @@ export class ListAtendimentosUseCase {
       prestadorId = id;
     }
 
+    // Shortcut `data` (YYYY-MM-DD) → range do dia em UTC.
+    let rangeInicio = query.rangeInicio;
+    let rangeFim = query.rangeFim;
+    if (query.data !== undefined && rangeInicio === undefined && rangeFim === undefined) {
+      const dia = query.data.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) {
+        rangeInicio = `${dia}T00:00:00Z`;
+        const d = new Date(`${dia}T00:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + 1);
+        rangeFim = d.toISOString();
+      }
+    }
+
     const { data, total } = await this.repo.listAtendimentos({
       page: query.page,
       pageSize: query.pageSize,
@@ -59,8 +72,8 @@ export class ListAtendimentosUseCase {
       setorId,
       prestadorId,
       status: query.status,
-      rangeInicio: query.rangeInicio,
-      rangeFim: query.rangeFim,
+      rangeInicio,
+      rangeFim,
     });
 
     return {

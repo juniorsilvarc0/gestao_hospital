@@ -224,7 +224,7 @@ export function NovoCasoPage(): JSX.Element {
                   setOrigemInfeccao(e.target.value as OrigemInfeccao | '')
                 }
               >
-                <option value="">— não definir —</option>
+                <option key="__empty__" value="">— não definir —</option>
                 {ORIGENS_INFECCAO.map((o) => (
                   <option key={o} value={o}>
                     {ORIGEM_INFECCAO_LABEL[o]}

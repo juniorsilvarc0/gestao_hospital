@@ -318,7 +318,7 @@ export function AbrirAtendimentoModal({
             <div className="space-y-1">
               <Label htmlFor="setorUuid">Setor</Label>
               <Select id="setorUuid" {...form.register('setorUuid')}>
-                <option value="">Selecione...</option>
+                <option key="__empty__" value="">Selecione...</option>
                 {(setoresQuery.data ?? []).map((s) => (
                   <option key={s.uuid} value={s.uuid}>
                     {s.nome}
@@ -337,7 +337,7 @@ export function AbrirAtendimentoModal({
                 id="unidadeAtendimentoUuid"
                 {...form.register('unidadeAtendimentoUuid')}
               >
-                <option value="">Selecione...</option>
+                <option key="__empty__" value="">Selecione...</option>
                 {(unidadesAtdQuery.data ?? []).map((u) => (
                   <option key={u.uuid} value={u.uuid}>
                     {u.nome}
@@ -356,7 +356,7 @@ export function AbrirAtendimentoModal({
                 id="unidadeFaturamentoUuid"
                 {...form.register('unidadeFaturamentoUuid')}
               >
-                <option value="">Selecione...</option>
+                <option key="__empty__" value="">Selecione...</option>
                 {(unidadesFatQuery.data ?? []).map((u) => (
                   <option key={u.uuid} value={u.uuid}>
                     {u.nome}
@@ -403,7 +403,7 @@ export function AbrirAtendimentoModal({
                     id="convenioUuid"
                     {...form.register('convenioUuid')}
                   >
-                    <option value="">Selecione...</option>
+                    <option key="__empty__" value="">Selecione...</option>
                     {(conveniosQuery.data ?? []).map((c) => (
                       <option key={c.uuid} value={c.uuid}>
                         {c.nome}

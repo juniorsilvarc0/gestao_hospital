@@ -302,7 +302,7 @@ export function AgendarCirurgiaPage(): JSX.Element {
                       )
                     }
                   >
-                    <option value="">—</option>
+                    <option key="__empty__" value="">—</option>
                     <option value="DIREITO">Direito</option>
                     <option value="ESQUERDO">Esquerdo</option>
                     <option value="BILATERAL">Bilateral</option>

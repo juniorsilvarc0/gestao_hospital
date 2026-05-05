@@ -346,7 +346,7 @@ export function PacienteFormPage({ mode }: PacienteFormPageProps): JSX.Element {
                   id="tipoAtendimentoPadrao"
                   {...form.register('tipoAtendimentoPadrao')}
                 >
-                  <option value="">--</option>
+                  <option key="__empty__" value="">--</option>
                   <option value="PARTICULAR">Particular</option>
                   <option value="CONVENIO">Convênio</option>
                   <option value="SUS">SUS</option>
@@ -391,7 +391,7 @@ export function PacienteFormPage({ mode }: PacienteFormPageProps): JSX.Element {
               <div className="space-y-1">
                 <Label htmlFor="tipoSanguineo">Tipo sanguíneo</Label>
                 <Select id="tipoSanguineo" {...form.register('tipoSanguineo')}>
-                  <option value="">--</option>
+                  <option key="__empty__" value="">--</option>
                   <option value="A+">A+</option>
                   <option value="A-">A-</option>
                   <option value="B+">B+</option>

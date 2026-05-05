@@ -77,7 +77,7 @@ export function EnderecoFields({
         <div className="space-y-1">
           <Label htmlFor="endereco.uf">UF</Label>
           <Select id="endereco.uf" {...register('endereco.uf')}>
-            <option value="">--</option>
+            <option key="__empty__" value="">--</option>
             {UFS.map((uf) => (
               <option key={uf} value={uf}>
                 {uf}

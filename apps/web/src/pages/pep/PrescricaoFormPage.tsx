@@ -581,7 +581,7 @@ function ItemEditor({
               value={item.via ?? ''}
               onChange={(e) => onChange({ via: e.target.value })}
             >
-              <option value="">—</option>
+              <option key="__empty__" value="">—</option>
               <option value="VO">VO (oral)</option>
               <option value="EV">EV (endovenoso)</option>
               <option value="IM">IM (intramuscular)</option>
