@@ -65,6 +65,9 @@ import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { PortalMedicoModule } from './modules/portal-medico/portal-medico.module';
 import { PortalPacienteModule } from './modules/portal-paciente/portal-paciente.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { SecurityListenerModule } from './modules/security-listener/security-listener.module';
+import { SecurityIcpModule } from './modules/security-icp/security-icp.module';
 
 @Module({
   imports: [
@@ -156,6 +159,10 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     PortalMedicoModule,
     PortalPacienteModule,
     WebhooksModule,
+    // Fase 13 — admin global + listeners de segurança + ICP-Brasil.
+    SecurityListenerModule,
+    AdminModule,
+    SecurityIcpModule,
   ],
   providers: [
     // Ordem importa: JwtAuthGuard popula request.user; PermissionsGuard
