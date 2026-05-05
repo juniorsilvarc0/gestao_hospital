@@ -19,6 +19,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import {
+  BarChart3,
   Bell,
   BookOpen,
   BookCopy,
@@ -47,6 +48,8 @@ import {
   Sparkles,
   ShieldAlert,
   Folder,
+  RefreshCcw,
+  TrendingUp,
   UserCheck,
 } from 'lucide-react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
@@ -119,6 +122,13 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   // Visitantes (Fase 10)
   { to: '/visitantes', label: 'Visitantes', icon: UserCheck },
   { to: '/visitas', label: 'Visitas', icon: UserCheck },
+  // BI / Indicadores (Fase 12)
+  { to: '/bi/executivo', label: 'Dashboard executivo', icon: BarChart3 },
+  { to: '/bi/operacional', label: 'Dashboard operacional', icon: Activity },
+  { to: '/bi/assistencial', label: 'Indicadores assistenciais', icon: HeartPulse },
+  { to: '/bi/financeiro', label: 'Indicadores financeiros', icon: TrendingUp },
+  { to: '/bi/operacionais', label: 'Indicadores operacionais', icon: Gauge },
+  { to: '/bi/refresh', label: 'Refresh BI', icon: RefreshCcw },
 ];
 
 

@@ -101,6 +101,13 @@ import { PacienteTeleconsultaPage } from '@/pages/portal-paciente/PacienteTeleco
 import { PacienteContasPage } from '@/pages/portal-paciente/PacienteContasPage';
 import { PacienteConsentimentosPage } from '@/pages/portal-paciente/PacienteConsentimentosPage';
 import { PacienteNotificacoesPage } from '@/pages/portal-paciente/PacienteNotificacoesPage';
+// BI / Indicadores (Fase 12)
+import { DashboardExecutivoPage } from '@/pages/bi/DashboardExecutivoPage';
+import { DashboardOperacionalPage } from '@/pages/bi/DashboardOperacionalPage';
+import { IndicadoresAssistenciaisPage } from '@/pages/bi/IndicadoresAssistenciaisPage';
+import { IndicadoresFinanceirosPage } from '@/pages/bi/IndicadoresFinanceirosPage';
+import { IndicadoresOperacionaisPage } from '@/pages/bi/IndicadoresOperacionaisPage';
+import { BiRefreshAdminPage } from '@/pages/bi/BiRefreshAdminPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/AppLayout';
 import { setOnUnauthorized } from '@/lib/api-client';
@@ -258,6 +265,23 @@ export function App(): JSX.Element {
         <Route path="/visitas" element={<VisitasListPage />} />
         <Route path="/visitas/registrar" element={<RegistrarVisitaPage />} />
         <Route path="/visitas/leito/:leitoUuid/ativas" element={<VisitasAtivasLeitoPage />} />
+
+        {/* BI / Indicadores (Fase 12) */}
+        <Route path="/bi/executivo" element={<DashboardExecutivoPage />} />
+        <Route path="/bi/operacional" element={<DashboardOperacionalPage />} />
+        <Route
+          path="/bi/assistencial"
+          element={<IndicadoresAssistenciaisPage />}
+        />
+        <Route
+          path="/bi/financeiro"
+          element={<IndicadoresFinanceirosPage />}
+        />
+        <Route
+          path="/bi/operacionais"
+          element={<IndicadoresOperacionaisPage />}
+        />
+        <Route path="/bi/refresh" element={<BiRefreshAdminPage />} />
       </Route>
 
       {/* Portal Médico (Fase 11) */}
