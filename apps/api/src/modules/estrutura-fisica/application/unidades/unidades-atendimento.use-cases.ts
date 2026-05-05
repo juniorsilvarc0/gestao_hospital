@@ -25,6 +25,7 @@ import {
 
 interface UnidadeAtRow {
   id: bigint;
+  uuid_externo: string;
   codigo: string;
   nome: string;
   ativa: boolean;
@@ -35,6 +36,7 @@ interface UnidadeAtRow {
 function toResponse(row: UnidadeAtRow): UnidadeAtendimentoResponse {
   return {
     id: row.id.toString(),
+    uuid: row.uuid_externo,
     codigo: row.codigo,
     nome: row.nome,
     ativa: row.ativa,

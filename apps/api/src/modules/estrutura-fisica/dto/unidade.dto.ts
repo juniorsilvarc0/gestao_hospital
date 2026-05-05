@@ -137,6 +137,7 @@ export class ListUnidadesQueryDto {
 
 export interface UnidadeFaturamentoResponse {
   id: string;
+  uuid: string;
   codigo: string;
   nome: string;
   cnes: string | null;
@@ -147,6 +148,7 @@ export interface UnidadeFaturamentoResponse {
 
 export interface UnidadeAtendimentoResponse {
   id: string;
+  uuid: string;
   codigo: string;
   nome: string;
   ativa: boolean;

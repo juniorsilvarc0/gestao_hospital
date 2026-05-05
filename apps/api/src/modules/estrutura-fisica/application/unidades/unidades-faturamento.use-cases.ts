@@ -31,6 +31,7 @@ import {
 
 interface UnidadeFatRow {
   id: bigint;
+  uuid_externo: string;
   codigo: string;
   nome: string;
   cnes: string | null;
@@ -42,6 +43,7 @@ interface UnidadeFatRow {
 function toResponse(row: UnidadeFatRow): UnidadeFaturamentoResponse {
   return {
     id: row.id.toString(),
+    uuid: row.uuid_externo,
     codigo: row.codigo,
     nome: row.nome,
     cnes: row.cnes,

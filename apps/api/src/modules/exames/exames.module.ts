@@ -35,6 +35,7 @@
  */
 import { Module } from '@nestjs/common';
 
+import { LaudosAliasController } from './laudos-alias.controller';
 import { ResultadosExameController } from './resultados-exame.controller';
 import {
   SolicitacoesExameController,
@@ -66,6 +67,7 @@ import {
     SolicitacoesExameController,
     SolicitacoesExameNestedController,
     ResultadosExameController,
+    LaudosAliasController,
   ],
   providers: [
     ExamesRepository,

@@ -27,6 +27,7 @@ import { PaginatedResponse, paginate, toBigInt } from '../../dto/common';
 
 interface SetorRow {
   id: bigint;
+  uuid_externo: string;
   nome: string;
   tipo: SetorTipo;
   unidade_faturamento_id: bigint;
@@ -39,6 +40,7 @@ interface SetorRow {
 function toResponse(row: SetorRow): SetorResponse {
   return {
     id: row.id.toString(),
+    uuid: row.uuid_externo,
     nome: row.nome,
     tipo: row.tipo,
     unidadeFaturamentoId: row.unidade_faturamento_id.toString(),

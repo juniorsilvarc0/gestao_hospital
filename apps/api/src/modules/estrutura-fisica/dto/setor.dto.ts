@@ -130,6 +130,7 @@ export class ListSetoresQueryDto {
 
 export interface SetorResponse {
   id: string;
+  uuid: string;
   nome: string;
   tipo: SetorTipo;
   unidadeFaturamentoId: string;
