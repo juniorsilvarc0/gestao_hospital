@@ -8,7 +8,7 @@
  * Loading: skeleton screen.
  * Empty state: mensagem com CTA para criar.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Users } from 'lucide-react';
@@ -56,14 +56,18 @@ export function PacientesListPage(): JSX.Element {
     staleTime: 30_000,
   });
 
-  if (isError && error instanceof ApiError) {
-    showToast({
-      variant: 'destructive',
-      title: 'Falha ao carregar pacientes',
-      description: error.detail ?? error.message,
-      durationMs: 5000,
-    });
-  }
+  // Toast em useEffect — chamar showToast direto no render dispara setState
+  // do ToastProvider durante o render desta página (warning React).
+  useEffect(() => {
+    if (isError && error instanceof ApiError) {
+      showToast({
+        variant: 'destructive',
+        title: 'Falha ao carregar pacientes',
+        description: error.detail ?? error.message,
+        durationMs: 5000,
+      });
+    }
+  }, [isError, error, showToast]);
 
   const totalPages = data?.meta.totalPages ?? 1;
   const total = data?.meta.total ?? 0;

@@ -56,6 +56,9 @@ async function bootstrap(): Promise<void> {
       'X-Request-ID',
       'X-Correlation-ID',
       'Idempotency-Key',
+      'X-Finalidade',           // LGPD — finalidade declarada do acesso ao prontuário
+      'X-Idempotency-Key',      // Webhooks (Fase 11)
+      'X-Signature',            // Webhooks HMAC (Fase 11)
     ],
     exposedHeaders: ['X-Correlation-ID'],
   });
